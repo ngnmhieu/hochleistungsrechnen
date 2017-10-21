@@ -1,0 +1,23 @@
+Frage 1: which cd
+'''''''''''''''''
+	- CD ist ein builtin von Bash (man bash: Shell Variables > HOME > "default argument for the cd builtin command" / type cd)
+
+	- Builtins sind in der Shell selber enthalten. (https://www.gnu.org/software/bash/manual/html_node/Shell-Builtin-Commands.html)
+
+	- which gibt den Pfad der Executable aus, welcher für CD aus dem obigen Grund nicht existiert (man which)
+
+Frage 2: drei Größen
+''''''''''''''''''''
+	- archiv/zufall:	256K (wie über bs=1k und count=256 spezifiziert (man dd: (bs: num of bytes written at a time) (count: num of input blocks copied)))
+	- archiv:		3 (vermutlich abgerundet? Auf meiner lokalen Maschine haben Directories die Größe 4,0K)
+	- archiv.tar:		260K (Summe aus den Größen des Verzeichnisses und der Datei)
+
+Frage 3: Erzeugen von .tar.gz über tar
+''''''''''''''''''''''''''''''''''''''
+	tar -czf archiv.tar.gz archiv
+
+	-c	create a new archiv
+	-f	use archive file (folgendes argument)
+	-z	--gzip
+
+Inhalt eines .tar.gz Archives anzeigen: tar -tf FILE
