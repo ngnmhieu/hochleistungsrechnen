@@ -1,0 +1,47 @@
+Eingabe                         Ausgabe                      			Anmerkung    
+---------------------------------------------------------------------------------------------------------
+gdb --args ./simple args       	GNU gdb ...					gdb startet
+
+b 10				Breakpoint 1 at 0x40063b: 
+				file simple.c, line 10.				break line 10
+
+run				Starting program:<Verzeichnis>  		run debug
+
+print buf			= {0, 0, 0, 0, 1, 0}				list int
+
+print buf[2]			= 0
+
+n										next line
+
+print buf			= {1, 1, 2, 3, 4, 5}				list int
+
+print buf[2]			= 2
+
+b 17				" -  b12  - "
+
+n
+
+print buf			= (int *) 0x4007fd <__libc_csu_init+77>		pointer
+
+n				buf[2] = 2;
+
+n..				Program received signal SIGSEGV, Segmentation 
+				fault.0x00000000004006ad in mistake3 () at 
+				simple.c:30
+
+bt				#0  0x00000000004006ad in mistake3 () at 
+				simple.c:30
+				#1  0x0000000000400725 in main () at 
+				simple.c:47
+
+frame 1				#1  0x0000000000400725 in main () at 
+				simple.c:47
+				47  int *p[4] = { &mistake1 ()[1], 
+				&mistake2 ()[1], mistake3 (), mistake4 () };
+
+print p				= {0x4, 0x601014, 0x7fffffffcba0, 0x0}
+
+call mistake4			= {int *()} 0x4006b9 <mistake4>
+
+
+
