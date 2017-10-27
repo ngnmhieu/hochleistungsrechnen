@@ -1,0 +1,19 @@
+Der erste Fehler befindet sich in mistake1() hier liegt buf auf dem Stack es soll aber ein Pointer returned werden.
+Hierzu müssen wir den Speicher auf dem Heap allokieren. Welchen wir dann buf nennen und buf
+wird zu tempbuf, da es nur temporär benötigt  wird. Dann brauchen wir nur noch tempbuf in buf setzen.
+
+In mistake2() ersetzen wir sizeof(char) mit sizeof(int), da wir es mit einem Integer Array zu tun haben.
+Außerdem haben wir buf[2] = 2 zu buf[1] = 2 geändert, da in der main der Wert an der Stelle 1 gefragt wird.
+
+In mistake3() muss *buf auch mit malloc auf den Heap geschrieben werden.
+
+In mistake4() ersetzen wir sizeof(char) mit sizeof(int) wie in mistake2() zuvor.
+Außerdem ändern wir buf[4] = 4 zu buf[0] = 4, da dieser Wert auch in main() abgefragt wird.
+Da buf noch gebraucht wird lassen wir free (buf) auch noch weg.
+
+In main() fehlen die richtigen Aufrufe von free(), um den auf dem Heap reservierten Speicher wieder freizugeben.
+free(p[0] - 1) da p[0] auf das zweite Element zeigt, sagen wir mit - 1, 
+	       dass der vorherigen Block gefreet wird.
+free(p[1] - 1) wie oben 
+free(p[2])    
+free(p[3])     
