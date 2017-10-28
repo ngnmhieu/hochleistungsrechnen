@@ -2,12 +2,22 @@ Die Bearbeitungszeit bitte in ganzen Stunden angeben (aufrunden).
 In den restlichen Zeilen jeweils ein X in der zutreffenden Spalte setzen.
 
 Bearbeitungszeit:  
-Schwierigkeit:     [ ] zu leicht         [ ] genau richtig     [ ] zu schwer
-Lehrreich:         [ ] wenig             [ ] etwas             [ ] sehr
-Verständlichkeit:  [ ] großteils unklar  [ ] teilweise unklar  [ ] verständlich
+Schwierigkeit:     [ ] zu leicht         [x] genau richtig     [ ] zu schwer
+Lehrreich:         [ ] wenig             [ ] etwas             [x] sehr
+Verständlichkeit:  [ ] großteils unklar  [x] teilweise unklar  [ ] verständlich
 
 Kommentar:
 Zeitaufwand zu groß? Wo sind Sie nicht weiter gekommen?
+- Zeitaufwand passt gut.
+
 Was war zu schwer oder unverständlich?
+- Bei der Aufgabe 1.1 ist es etwas unklar in wieweit man den Code korrigieren soll.
+
 Was könnten wir verbessern?
+- Detailierte Anleitung zu dem Tools wäre echt nice, z.B. Tutorial in einem separaten PDF darüber, wie man GDB / Valgrind nutzt und welche Funktionalitäten sind darüber hinaus verfügbar.
+- Manche haben Windows / Mac OS und es führt dabei zum unterschiedlichen Ergebnissen. Eine Idee ist eine Anleitung zum Aufsetzen von einer Virtual Maschine als Entwicklungsumgebung mithilfe von Vagrant (ggf. zusammen mit Ansible) einzuführen. Da
+
 Was hat Ihnen besonders gut gefallen?
+- Valgrind und memcheck sind sehr  Tools zum Debuggen und Memory-Leaks Fehler zu finden. Sehr hilfreich kennen zu lernen.
+- Komplex Anwendung zu Debuggen, ohne die Semantik davon zu wissen
+
