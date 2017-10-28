@@ -1,0 +1,5 @@
+1. askparams.c:197 
+   Die Zahl 3 wurde als 333 vertypt
+
+2. partdiff-seq.c:96
+  (N+1)^2 doubles muessen alloziert werden anstatt (N+1)*(N-1)

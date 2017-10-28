@@ -93,7 +93,9 @@ allocateMatrices (void)
       errorQuit ();
     }				/* quit if error   */
 
-  M = malloc (sizeof (double) * (N + 1) * (N - 1) * 2);	/* allocate memory */
+  // Fehler, (N+1)^2 double must be allocated instead of (N+1)*(N-1)
+  M = malloc (sizeof (double) * (N + 1) * (N + 1) * 2);	/* allocate memory */
+
   if (M == 0)
     {
       errorQuit ();
