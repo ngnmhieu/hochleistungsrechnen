@@ -1,47 +1,63 @@
-Eingabe                         Ausgabe                      			Anmerkung    
----------------------------------------------------------------------------------------------------------
-gdb --args ./simple args       	GNU gdb ...					gdb startet
+//(>> ist die erste Zeile der ausgabe, > ist jede weitere Zeile der selben Ausgabe)
 
-b 10				Breakpoint 1 at 0x40063b: 
-				file simple.c, line 10.				break line 10
+1.1.p1.d1
+'''''''''
+					make
+					gdb -q ./simple
+	breakpoint on mistake1:		b mistake1
+				>>	Breakpoint 1 at 0x40063b: file simple.c, line 12
+	run:				run
+				>>	Starting program: /home/fuhrmann/02-gdb-valgrind/simple/simple
+				 >
+				 >	Breakpoint 1, mistake1 () at simple.c:12
+				 >	12	  int buf[] = { 1, 1, 2, 3, 4, 5 };
+	val of buf:			print buf
+				>>	$1 = {0, 0, 0, 0, 1, 0}
+	val of buf[2]:			print buf[2]
+				>>	$2 = 0
 
-run				Starting program:<Verzeichnis>  		run debug
+1.1.p1.d2
+'''''''''
+	breakpoint on mistake2:		b mistake2
+				>>	Breakpoint 2 at 0x400674: file simple.c, line 19.
+	fortsetzen:			c
+				>>	Continuing.
+				 >
+				 >	Breakpoint 2, mistake2 () at simple.c:19
+				 >	19	  int *buf = malloc (sizeof (char) * 4);
+	type of buf:			ptype buf
+				>>	type = int *
 
-print buf			= {0, 0, 0, 0, 1, 0}				list int
+1.1.p1.d3
+'''''''''
+	fortsetzen:			c
+				>>	Continuing.
+				 >
+				 >	Program received signal SIGSEGV, Segmentation fault.
+				 >	0x00000000004006ad in mistake3 () at simple.c:30
+				 >	30	  buf[0] = 3;
+	code:				list
+				>>	25	mistake3 ()
+				 >	26	{
+				 >	27	  /* In dieser Funktion darf kein Speicher direkt allokiert werden. */
+				 >	28	  int mistake2_ = 0;
+				 >	29	  int *buf = (int *) &mistake2;
+				 >	30	  buf[0] = 3;
+				 >      31	  return buf;
+				 >      32	}
+				 >      33
+				 >      34	int *
+	frames on stack:		bt
+				>>	#0  0x00000000004006ad in mistake3 () at simple.c:30
+				 >	#1  0x0000000000400725 in main () at simple.c:47
+	switch to frame 1:		frame 1
+				>>	#1  0x0000000000400725 in main () at simple.c:47
+				 >	47	  int *p[4] = { &mistake1 ()[1], &mistake2 ()[1], mistake3 (), mistake4 () };
+	val of p:			print p
+				>>	$3 = {0x4, 0x601014, 0x7fffffffca50, 0x0}
 
-print buf[2]			= 0
-
-n										next line
-
-print buf			= {1, 1, 2, 3, 4, 5}				list int
-
-print buf[2]			= 2
-
-b 17				" -  b12  - "
-
-n
-
-print buf			= (int *) 0x4007fd <__libc_csu_init+77>		pointer
-
-n				buf[2] = 2;
-
-n..				Program received signal SIGSEGV, Segmentation 
-				fault.0x00000000004006ad in mistake3 () at 
-				simple.c:30
-
-bt				#0  0x00000000004006ad in mistake3 () at 
-				simple.c:30
-				#1  0x0000000000400725 in main () at 
-				simple.c:47
-
-frame 1				#1  0x0000000000400725 in main () at 
-				simple.c:47
-				47  int *p[4] = { &mistake1 ()[1], 
-				&mistake2 ()[1], mistake3 (), mistake4 () };
-
-print p				= {0x4, 0x601014, 0x7fffffffcba0, 0x0}
-
-call mistake4			= {int *()} 0x4006b9 <mistake4>
-
-
+1.1.p1.d4
+'''''''''
+	call mistake4:			call mistake4 ()
+				>>	$4 = (int *) 0x601030
 

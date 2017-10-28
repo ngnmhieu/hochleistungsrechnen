@@ -12,8 +12,8 @@ Auﬂerdem ‰ndern wir buf[4] = 4 zu buf[0] = 4, da dieser Wert auch in main() abge
 Da buf noch gebraucht wird lassen wir free (buf) auch noch weg.
 
 In main() fehlen die richtigen Aufrufe von free(), um den auf dem Heap reservierten Speicher wieder freizugeben.
-free(p[0] - 1) da p[0] auf das zweite Element zeigt, sagen wir mit - 1, 
+free(p[0] - 1) da p[0] auf das zweite Element zeigt, sagen wir mit - 1,
 	       dass der vorherigen Block gefreet wird.
-free(p[1] - 1) wie oben 
-free(p[2])    
-free(p[3])     
+free(p[1] - 1) wie oben
+free(p[2])
+free(p[3])
