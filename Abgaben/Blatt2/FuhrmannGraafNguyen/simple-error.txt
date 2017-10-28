@@ -1,0 +1,33 @@
+(Zeilenangaben beziehen sich auf Ursprungsdatei)
+
+Zeile 12:	(mistake1(): int buf[] = ...)
+	buf[] ist eine lokale Variable und wird in den aktuellen Stackframe gelegt. Nach dem Verlassen der Methode wird dieser aufgeräumt.
+	Um einen Pointer auf einen korrekten Wert returnen zu können, muss Speicher auf dem Heap allokiert werden, stat auf dem Stack.
+	Die lokale Variable speichern wir in der korrigierten Version als temp_buf, und die Heap-Variante als buf.
+	Die lokalen Werte übertragen wir dann auf den reservierten Speicher im Heap und returnen den entsprechenden Pointer.
+
+Zeile 19:	(mistake2(): malloc(sizeof(char)*4))
+	Da wir in buf[] Integer speichern wollen, müssen wir dem entsprechend auch mit sizeof(int) arbeiten.
+
+Zeile 20:	(mistake2(): buf[2])
+	Außerdem haben wir buf[2] = 2 zu buf[1] = 2 geändert, da in main() der Wert an der Stelle 1 gefragt wird. (Zeile 47)
+
+Zeile 28+29:	(mistake3(): int *buf = (int*) &mistake2)
+	Es darf hier kein Speicher direkt allokiert werden.
+	-> Dynamisch per malloc + auf Heap
+
+Zeile 37:	(mistake4(): sizeof(char))
+	Auch hier ersetzen wir sizeof(char) mit sizeof(int) wie in mistake2() zuvor.
+
+Zeile 38:	(mistake4(): buf[4] = 4)
+	Da in main() mistake4() gelsen wird (<=> buf[0]) ändern wir buf[4] = 4 zu buf[0] = 4.
+
+Zeile 39:	(mistake4(): free (buf))
+	Da buf noch gebraucht wird, lassen wir free (buf) weg.
+
+Zeile 56ff:	(main(): free...)
+	Hier fehlen die richtigen Aufrufe von free(), um den auf dem Heap reservierten Speicher wieder freizugeben.
+	free(p[0] - 1) da p[0] auf das zweite Element zeigt. (- 1 => vorherigen Block free-en)
+	free(p[1] - 1) wie oben
+	free(p[2])
+	free(p[3])
