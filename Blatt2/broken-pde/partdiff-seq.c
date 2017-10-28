@@ -93,9 +93,7 @@ allocateMatrices (void)
       errorQuit ();
     }				/* quit if error   */
 
-  // Fehler, (N+1)^2 double must be allocated instead of (N+1)*(N-1)
   M = malloc (sizeof (double) * (N + 1) * (N + 1) * 2);	/* allocate memory */
-
   if (M == 0)
     {
       errorQuit ();
@@ -229,7 +227,7 @@ calculate (void)
 	  for (i = 1; i < N; i++)	/* over all rows  */
 	    {
 	      star = -Matrix[m2][i - 1][j]
-		- Matrix[j - 1][m2][i] + 4 * Matrix[m2][i][j] -
+		- Matrix[m2][i][j - 1] + 4 * Matrix[m2][i][j] -
 		Matrix[m2][i][j + 1] - Matrix[m2][i + 1][j];
 
 	      residuum = getResiduum (i, j);
