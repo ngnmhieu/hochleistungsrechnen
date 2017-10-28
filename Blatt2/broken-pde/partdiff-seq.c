@@ -162,11 +162,11 @@ initMatrices (void)
 void
 freeMatrices (void)
 {
-  free (Matrix);
   if (Matrix[1] != 0)
     free (Matrix[1]);
   if (Matrix[0] != 0)
     free (Matrix[0]);
+  free (Matrix);
 }
 
 
