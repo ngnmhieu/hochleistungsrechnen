@@ -167,6 +167,7 @@ freeMatrices (void)
   if (Matrix[0] != 0)
     free (Matrix[0]);
   free (Matrix);
+  free (M);
 }
 
 
