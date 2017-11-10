@@ -76,6 +76,13 @@ ToDo:
 
 14.
 In sview kann man die Priorität sowohl nachsehen als auch anpassen.
+Mit Kommandozeilen:
+```
+# Job Info inkl. Priorität anzeigen lassen
+scontrol show jobid=<jobid>
+# Priorität von Job ändern
+scontrol update jobid=<jobid> Priority=<new-priority>
+```
 
 15.
 Partitionen west, abu, amd, magny, nehalem. 
