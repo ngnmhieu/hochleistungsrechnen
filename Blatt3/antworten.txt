@@ -50,8 +50,17 @@ In sview mit Rechtsclick Full Info.
 Oder mit den Komandozeilen `scontrol show jobid -dd <jobid>`
 
 11.
-ToDo:
-------------------------------------------------------------------------------
+Es gibt zwei mögliche Scheduling-Verfahren: 'sched/builtin' und 'sched/backfill'. 'sched/backfill' wird auf dem System verwendet
+(in sview Options -> Config Info).
+
+Erläuterung (https://slurm.schedmd.com/sched_config.html):
+
+Backfill Scheduling schaut sich alle Jobs an (laufenden und ausstehenden). Die ausstehenden Jobs
+werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
+höher priorisierten Jobs beeinträchtigen, dann wird er ausgeführt.
+
+Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
+
 
 12.
 $ salloc -p west -w west3
