@@ -54,7 +54,7 @@ ToDo:
 In sview kann man die Priorität sowohl nachsehen als auch anpassen.
 
 15.
-Partition west. 
+Partitionen west, abu, amd, magny, nehalem. 
 Man kann eine Partition mithilfe des "-p"-Switches wählen.
 
 Aufgabe 2.
