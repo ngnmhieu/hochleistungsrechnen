@@ -56,3 +56,10 @@ In sview kann man die Priorität sowohl nachsehen als auch anpassen.
 15.
 Partition west. 
 Man kann eine Partition mithilfe des "-p"-Switches wählen.
+
+Aufgabe 2.
+Frage:
+ToDo
+
+Frage:
+ToDo
