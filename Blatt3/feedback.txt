@@ -9,5 +9,5 @@ Verständlichkeit:  [ ] großteils unklar  [ ] teilweise unklar  [ ] verständli
 Kommentar:
 Zeitaufwand zu groß? Wo sind Sie nicht weiter gekommen?
 Was war zu schwer oder unverständlich?
-Was könnten wir verbessern?
+Was könnten wir verbessern?	In Aufgabe 1.7 wäre ein Hinweis auf die Verwendung von ssh -AY eventuell hilfreich.
 Was hat Ihnen besonders gut gefallen?

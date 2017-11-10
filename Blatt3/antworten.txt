@@ -1,96 +1,120 @@
-1.
-Mehrere Nutzer können auf dem gleichen System Jobs laufen lassen, in dem man Jobs bzw. Aufträge an dem System übergibt.
+1) Batch Queuing:
+"""""""""""""""""
+	Es koennen mehrere Programme zur Ausfuehrung submittet werden, ohne dass dafuer auf den Abschluss laufender Jobs oder auf Auslastung geachtet werden muss.
 
-2.
-Das Batch-Queuing-System erstellt eine Queue in der,
-die Jobs auf die verfügbaren Ressourcen verteilt und priorisiert werden.
+2) Aufgaben Batch-Queuing-System:
+"""""""""""""""""""""""""""""""""
+	Das System ist fuer die Verwaltung der aufgetragenen Jobs zustaendig. Resourcen werden gemonitored und verteilt.
 
-3.
-SLURM, Grid MP, Moab Cluster Suite.
+	(vgl. u.a. http://www.csb.yale.edu/userguides/sysresource/batch/batch.html)
+	man slurm:
+        		Allocation of exclusive and/or non-exclusive access to resources (compute nodes)
+			Provision of a framework for starting, executing, and monitoring work (normally a parallel job) on the set of allocated nodes.
+			Arbetration of contention for resources by managing a queue of pending work.
 
-4.
-Simple Linux Utility for Resource Management (SLURM).
+3) 3 Bsp.:
+""""""""""
+	Oracle Grid Engine / frm. Sun Grid Engine
+	Moab Cluster Suite
+	SLURM
 
-5.
-`sbatch` Übergibt ein Batch-Skript an SLURM. Die Nutzung des Befehls beschreiben wir hier kurz.  
+4) SLURM:
+"""""""""
+	Simple Linux Utility for Resource Management.
 
-Man kann  dem Befehl ein Batch-Skript füttern entweder mit einer Datei oder per Standardeingabe: 
-```
-  $ sbatch mein-skript.sh
-  salloc: Granted job allocation 65537
+5) man sbatch:
+""""""""""""""
+	Sbatch wird verwendet um batch scripte an slurm zu submiten.
+	Das einzureichende script kann dabei entweder per Pfad referenziert werden (sbatch [options] script [args...]), oder per stdin bezogen werden.
 
-  $ sbatch <<EOF
-  > #!/bin/sh
-  > #SBATCH --partition=west
-  > echo "Hochleistungsrechnen"
-  > EOF
-  sbatch: Submitted batch job 65541
-```
-Man muss bei der Übergabe des Auftrages einige Informationen angeben, wie welche Partition, Ausgabe Log-Datei, Fehler Log-Datei, ... Das lässt sich
-entweder per Komando-Zeile oder in der Skript-Datei (mit #SBATCH ...) angeben.
+	```
+	  $ sbatch mein-skript.sh
+	  salloc: Granted job allocation 65537
 
-6.
-Mit dem Befehl "squeue".
+	  $ sbatch <<EOF
+	  > #!/bin/sh
+	  > #SBATCH --partition=west
+	  > echo "Hochleistungsrechnen"
+	  > EOF
+	  sbatch: Submitted batch job 65541
+	```
 
-7.
-sview ist im vergleich mit squeue übersichtlicher.
-Es wird eine GUI geöffnet, die aktuell laufende Jobs anzeigt und einen Überblick
-über das Cluster gibt. Darüber hinaus lässt sich auf andere Informationen schnell zugreifen
-und zwischen unterschiedlichen Sichten wechseln.
+	Man muss bei der Übergabe des Auftrages einige Informationen angeben, wie welche Partition, Ausgabe Log-Datei, Fehler Log-Datei, ... Das lässt sich
+	entweder per Komando-Zeile oder in der Skript-Datei (mit #SBATCH ...) angeben.
 
-8.
-Ja und zwar mit dem Befehl "scancel". 
-Außerdem kann man auch mit Rechtsclick Cancel einen Job beenden.
+	Sbatch selber wird dabei direkt nach der Uebermittlung des Jobs, und entsprechender Zuteilung einer Slurm-Job-ID, geschlossen.
 
-9.
-Ja.
+	stdout und stderr werden dabei standardmäßig in slurm-<ALOCATION_NUMBER>.out geschrieben
 
-10.
-In sview mit Rechtsclick Full Info.
-Oder mit den Komandozeilen `scontrol show jobid -dd <jobid>`
+6) aktuelle Jobs + status:
+""""""""""""""""""""""""""
+	squeue
 
-11.
-Es gibt zwei mögliche Scheduling-Verfahren: 'sched/builtin' und 'sched/backfill'. 'sched/backfill' wird auf dem System verwendet
-(in sview Options -> Config Info).
+7) sview:
+"""""""""
+	man: graphical user interface to view <and modify> Slurm state.
 
-Erläuterung (https://slurm.schedmd.com/sched_config.html):
+	sview bietet eine breitere Uebersicht und ermoeglicht es zu einzelnen Jobs direkt mehr Informationen zu beziehen. Zudem koennen Jobs direkt mit dem Tool verwaltet, erstellt und gesucht werden.
+	auch slurm spezifische Informationen wie die configuration kann über sview eingesehen werden.
 
-Backfill Scheduling schaut sich alle Jobs an (laufenden und ausstehenden). Die ausstehenden Jobs
-werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
-höher priorisierten Jobs beeinträchtigen, dann wird er ausgeführt.
+8) Job loeschen:
+"""""""""""""""
+	Ja, entweder ueber sview mit rechtsklick auf den Job und der folgenden Auswahl von "Cancel"
+	  , oder ueber scancel mit der entsprechenden Job-ID
 
-Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
+9) Mehrere Jobs/User per Knoten:
+""""""""""""""""""""""""""""""""
+	Ja.
 
+10) detailierter Job-Status:
+""""""""""""""""""""""""""""
+	sview > rechtsklick-auf-job > "full info"
 
-12.
-$ salloc -p west -w west3
-salloc: Granted job allocation 35019
-$ ssh west3
-$ hostname
-west3
+11) moegliche und verwendetes Scheduling-Verfahren:
+"""""""""""""""""""""""""""""""""""""""""""""""""
+	Es gibt zwei mögliche Scheduling-Verfahren: 'sched/builtin' und 'sched/backfill'. 'sched/backfill' wird auf dem System verwendet
+	(in sview Options -> Config Info).
 
-13.
-ToDo:
------------------------------------------------------------
+	Erläuterung (https://slurm.schedmd.com/sched_config.html):
 
+	Backfill Scheduling schaut sich alle Jobs an (laufenden und ausstehenden). Die ausstehenden Jobs
+	werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
+	höher priorisierten Jobs beeinträchtigen, dann wird er ausgeführt.
 
-14.
-In sview kann man die Priorität sowohl nachsehen als auch anpassen.
-Mit Kommandozeilen:
-```
-# Job Info inkl. Priorität anzeigen lassen
-scontrol show jobid=<jobid>
-# Priorität von Job ändern
-scontrol update jobid=<jobid> Priority=<new-priority>
-```
+	Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
 
-15.
-Partitionen west, abu, amd, magny, nehalem. 
-Man kann eine Partition mithilfe des "-p"-Switches wählen.
+12) Knoten Allokation + Ausfuehrung hostname:
+""""""""""""""""""""""""""""""""""""""""""""
+	salloc -p <-- Partition auswÃ¤hlen
+	salloc -w <-- Liste an Hosts wÃ¤hlen (Zunahme von weiteren Knoten falls erforderlich)
+	____________________________________
+	$ salloc -p west -w west7
+	salloc: Pending job allocation 35136
+	salloc: job 35136 queued and waiting for resources
+	salloc: job 35136 has been allocated resources
+	salloc: Granted job allocation 35136
+	$ ssh west7
+	...
+	$ hostname
+	west7
 
-Aufgabe 2.
-Frage:
-ToDo
+13) Timeout:
+""""""""""""
+	In sview wird ein timelimit von 06:00:00 angezeigt, falls nicht per --time ein eigenes Limit gesetzt wurde.
 
-Frage:
-ToDo
+14) Prio:
+"""""""""
+	In sview kann die Prioritaet sowohl nachgeguckt, als auch veraendert werden
+
+	Mit Kommandozeilen:
+	```
+	Job Info inkl. Priorität anzeigen lassen:
+		$ scontrol show jobid=<jobid>
+	Priorität von Job ändern:
+		$ scontrol update jobid=<jobid> Priority=<new-priority>
+
+15) Partitionen:
+""""""""""""""""
+	Partitionen: west, abu, amd, magny, nehalem.
+	Man kann eine Partition mithilfe des "-p"-Switches waehlen.
+
