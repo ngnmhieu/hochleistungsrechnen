@@ -1,3 +1,7 @@
+=========================
+=	Aufgabe 1	=
+=========================
+
 1) Batch Queuing:
 """""""""""""""""
 	Es koennen mehrere Programme zur Ausfuehrung submittet werden, ohne dass dafuer auf den Abschluss laufender Jobs oder auf Auslastung geachtet werden muss.
@@ -118,3 +122,7 @@
 	Partitionen: west, abu, amd, magny, nehalem.
 	Man kann eine Partition mithilfe des "-p"-Switches waehlen.
 
+------------------------------------------------------------------------------
+=========================
+=	Aufgabe 2	=
+=========================
