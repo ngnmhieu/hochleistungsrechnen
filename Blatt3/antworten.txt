@@ -1,8 +1,8 @@
 1.
-Mehrere Nutzer können auf dem gleichen System Jobs laufen lassen.
+Mehrere Nutzer können auf dem gleichen System Jobs laufen lassen, in dem man Jobs bzw. Aufträge an dem System übergibt.
 
 2.
-Das Batch-Queuing-System erstell eine Queue in der,
+Das Batch-Queuing-System erstellt eine Queue in der,
 die Jobs auf die verfügbaren Ressourcen verteilt und priorisiert werden.
 
 3.
@@ -12,9 +12,22 @@ SLURM, Grid MP, Moab Cluster Suite.
 Simple Linux Utility for Resource Management (SLURM).
 
 5.
-Übergibt ein Batch-Skript an SLURM
-ToDo:
--------------------------------------
+`sbatch` Übergibt ein Batch-Skript an SLURM. Die Nutzung des Befehls beschreiben wir hier kurz.  
+
+Man kann  dem Befehl ein Batch-Skript füttern entweder mit einer Datei oder per Standardeingabe: 
+```
+  $ sbatch mein-skript.sh
+  salloc: Granted job allocation 65537
+
+  $ sbatch <<EOF
+  > #!/bin/sh
+  > #SBATCH --partition=west
+  > echo "Hochleistungsrechnen"
+  > EOF
+  sbatch: Submitted batch job 65541
+```
+Man muss bei der Übergabe des Auftrages einige Informationen angeben, wie welche Partition, Ausgabe Log-Datei, Fehler Log-Datei, ... Das lässt sich
+entweder per Komando-Zeile oder in der Skript-Datei (mit #SBATCH ...) angeben.
 
 6.
 Mit dem Befehl "squeue".
@@ -22,7 +35,8 @@ Mit dem Befehl "squeue".
 7.
 sview ist im vergleich mit squeue übersichtlicher.
 Es wird eine GUI geöffnet, die aktuell laufende Jobs anzeigt und einen Überblick
-über das Cluster gibt.
+über das Cluster gibt. Darüber hinaus lässt sich auf andere Informationen schnell zugreifen
+und zwischen unterschiedlichen Sichten wechseln.
 
 8.
 Ja und zwar mit dem Befehl "scancel". 
@@ -32,7 +46,8 @@ Außerdem kann man auch mit Rechtsclick Cancel einen Job beenden.
 Ja.
 
 10.
-In sview mit Rechtsclick Full Info
+In sview mit Rechtsclick Full Info.
+Oder mit den Komandozeilen `scontrol show jobid -dd <jobid>`
 
 11.
 ToDo:
