@@ -1,0 +1,58 @@
+1.
+Mehrere Nutzer können auf dem gleichen System Jobs laufen lassen.
+
+2.
+Das Batch-Queuing-System erstell eine Queue in der,
+die Jobs auf die verfügbaren Ressourcen verteilt und priorisiert werden.
+
+3.
+SLURM, Grid MP, Moab Cluster Suite.
+
+4.
+Simple Linux Utility for Resource Management (SLURM).
+
+5.
+Übergibt ein Batch-Skript an SLURM
+ToDo:
+-------------------------------------
+
+6.
+Mit dem Befehl "squeue".
+
+7.
+sview ist im vergleich mit squeue übersichtlicher.
+Es wird eine GUI geöffnet, die aktuell laufende Jobs anzeigt und einen Überblick
+über das Cluster gibt.
+
+8.
+Ja und zwar mit dem Befehl "scancel". 
+Außerdem kann man auch mit Rechtsclick Cancel einen Job beenden.
+
+9.
+Ja.
+
+10.
+In sview mit Rechtsclick Full Info
+
+11.
+ToDo:
+------------------------------------------------------------------------------
+
+12.
+$ salloc -p west -w west3
+salloc: Granted job allocation 35019
+$ ssh west3
+$ hostname
+west3
+
+13.
+ToDo:
+-----------------------------------------------------------
+
+
+14.
+In sview kann man die Priorität sowohl nachsehen als auch anpassen.
+
+15.
+Partition west. 
+Man kann eine Partition mithilfe des "-p"-Switches wählen.
