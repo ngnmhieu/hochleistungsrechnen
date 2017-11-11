@@ -10,7 +10,23 @@ Das Programm verbringt die meiste Zeit (94,64%) in der `calculate` Funktion, die
 
 3. Profiling mit perf:
 """"""""""""""""""""""""""""
-TODO
+task-clock (msec): die gestamte Laufzeit von dem Programm.
+
+context-switches: die Anzahl von Kontextwechsel, d.h. wievielmal wurde der Prozess vom Scheduler ausgelagert und wierhergestellt. Kontextwechsel findet statt, wenn ein Prozess durch einen anderen Prozess verdrängt wird.
+
+cpu-migrations: wievielmal der Scheduler den Prozess von einem CPU zu einem anderen CPU umziehen.
+
+page-faults: Ein Page-Fault findet statt, wenn die Daten des virtuellen Speichers nicht im Hauptspeicher sind und muessen in den Hauptspeicher geladen werden.
+
+cycles: Anzahl von für das Programm verbrauchten CPU-Zyklen 
+
+stalled-cycles-frontend und -backend: die Zyklen in denen die CPU nichts ausführt.
+
+instructions: Anzahl von Code-Befehle asugeführt wurden.
+
+branches: Anzahl der Verzeigungen im Programm.
+
+branch-misses: der CPU rät bei einer Verzweigung welcher Teil wird ausgeführt, bevor die Bedingung ausgewertet wird, damit Befehle schneller geladen werden. Bei einer falschen Rateversuch zählt es als ein branch-miss.
 
 4. Optimierung des Programms
 """"""""""""""""""""""""""""
