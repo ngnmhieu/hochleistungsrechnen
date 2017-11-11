@@ -1,4 +1,5 @@
 #!/bin/bash
 host=$(hostname)
-time=$(date +%s.%3N)
+time=$(date +%T.%N)
 echo $host : $time
+
