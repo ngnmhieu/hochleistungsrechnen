@@ -182,7 +182,7 @@ Frage 1: Was fällt auf?
 	west5 : 15:31:53.896883169	west5 : 15:31:53.896883169	+ - 0
 	west4 : 15:31:53.896751356	west6 : 15:31:53.896997799	  - 1
 	west6 : 15:31:53.896997799	west6 : 15:31:53.897004771	+   5
-	west5 : 15:31:53.897057484	west5 : 15:31:53.897057484	+ - 0		//2 folgenden Zeilen beim bearbeiten unbemerkt verloren
+	west5 : 15:31:53.897057484	west5 : 15:31:53.897057484	+ - 0		//2 folgenden Zeilen beim Bearbeiten unbemerkt verloren
 
 	Es fällt also direkt auf, dass die Reihenfolge der Ausgabe nicht mit den Zeitstempeln übereinstimmt.
 	Auch fällt auf, dass der Knoten "west3" stehts zu erst mit allen 4 Ausführungen ist.
@@ -194,7 +194,10 @@ Frage 1: Was fällt auf?
 Frage 2: timescript.out im timescript erzeugen?
 """""""""""""""""""""""""""""""""""""""""""""""
 
-	Ja, das ist möglich. Wenn man statt "echo ..." (also nur auf stdout schreibend) "echo ... >> FILE" benutzt, so wird der Output in einer Datei FILE abgelget (Selbes Verzeichnis in dem sbatch aufgerufen wurde - lokal). In diesem Fall wird der Output sogar zeitlich korrekt sortiert ausgegeben. Es scheint dadurch auch nicht sequentliell gearbeitet worden zu sein, da die Knoten nicht sortiert sind. Allerdings scheinen so einige Ausgaben verloren zu gehen:
+	Ja, das ist möglich. Wenn man statt "echo ..." (also nur auf stdout schreibend) "echo ... >> FILE" benutzt, so wird der Output in einer Datei FILE abgelget (Selbes Verzeichnis in dem sbatch aufgerufen wurde - lokal).
+	In diesem Fall wird der Output zeitlich sortiert ausgegeben.
+	Es scheint dadurch auch nicht sequentliell gearbeitet worden zu sein, da die Knoten nicht sortiert sind.
+	Allerdings scheinen so einige Ausgaben verloren zu gehen (vermutlich durch blockieren der Datei beim Schreiben):
 
 	west4 : 18:02:46.103288040
 	west4 : 18:02:46.103425790
