@@ -126,3 +126,127 @@
 =========================
 =	Aufgabe 2	=
 =========================
+
+Frage 1: Was fällt auf?
+"""""""""""""""""""""""
+	folgend sind die Ausgaben (timescript.out) von 3 Aufrufen
+	von '$ sbatch job_script' gelistet.
+
+	Original Ausgabe:		Zeitlich sortiert:		Positionsunterschied:
+
+	1)
+	west3 : 15:28:03.527520862	west3 : 15:28:03.527520862	+ - 0
+	west4 : 15:28:03.538012973	west3 : 15:28:03.527526353	  - 3
+	west6 : 15:28:03.538386599	west3 : 15:28:03.527563826	  - 3
+	west5 : 15:28:03.538821155	west3 : 15:28:03.527639832	  - 3
+	west3 : 15:28:03.527526353	west4 : 15:28:03.537988420	  - 3
+	west3 : 15:28:03.527563826	west4 : 15:28:03.538012973	+   4
+	west3 : 15:28:03.527639832	west4 : 15:28:03.538128756	  - 9
+	west4 : 15:28:03.537988420	west4 : 15:28:03.538129993	  - 3
+	west5 : 15:28:03.538945848	west6 : 15:28:03.538386599	+   6
+	west6 : 15:28:03.538503724	west6 : 15:28:03.538503724	+ - 0
+	west4 : 15:28:03.538129993	west5 : 15:28:03.538821155	+   7
+	west5 : 15:28:03.539026842	west5 : 15:28:03.538945848	+   3
+	west5 : 15:28:03.539026873	west5 : 15:28:03.539026842	+   1
+	west6 : 15:28:03.539311785	west5 : 15:28:03.539026873	+   1
+	west4 : 15:28:03.538128756	west6 : 15:28:03.539311785	+   1
+	west6 : 15:28:03.539638653	west6 : 15:28:03.539638653	+ - 0
+	2)
+	west3 : 15:31:12.530443604	west3 : 15:31:12.530443604	+ - 0
+	west4 : 15:31:12.540576843	west3 : 15:31:12.530735375	  - 3
+	west5 : 15:31:12.540784666	west3 : 15:31:12.530789225	  - 3
+	west6 : 15:31:12.541107842	west3 : 15:31:12.531220706	  - 3
+	west3 : 15:31:12.530735375	west4 : 15:31:12.540576843	+   3
+	west3 : 15:31:12.530789225	west4 : 15:31:12.540634616	  - 2
+	west3 : 15:31:12.531220706	west4 : 15:31:12.540687480	  - 4
+	west4 : 15:31:12.540634616	west5 : 15:31:12.540784666	+   5
+	west5 : 15:31:12.540838296	west5 : 15:31:12.540838296	+ - 0
+	west6 : 15:31:12.541234267	west4 : 15:31:12.540860867	  - 6
+	west4 : 15:31:12.540687480	west5 : 15:31:12.540947360	  - 1
+	west5 : 15:31:12.540947360	west5 : 15:31:12.540991712	  - 2
+	west6 : 15:31:12.541369371	west6 : 15:31:12.541107842	+   9
+	west5 : 15:31:12.540991712	west6 : 15:31:12.541234267	+   4
+	west6 : 15:31:12.541488323	west6 : 15:31:12.541369371	+   2
+	west4 : 15:31:12.540860867	west6 : 15:31:12.541488323	+   1
+	3)
+	west3 : 15:31:53.893304146	west3 : 15:31:53.893304146	+ - 0
+	west5 : 15:31:53.896564037	west3 : 15:31:53.893608913	  - 3
+	west4 : 15:31:53.896598226	west3 : 15:31:53.893703858	  - 4
+	west3 : 15:31:53.893704503	west4 : 15:31:53.896598226	+   3
+	west3 : 15:31:53.893703858	west4 : 15:31:53.896641914	  - 2
+	west6 : 15:31:53.896870074	west4 : 15:31:53.896751101	  - 4
+	west4 : 15:31:53.896641914	west4 : 15:31:53.896751356	  - 5
+	west6 : 15:31:53.897004771	west5 : 15:31:53.896839783	  - 1
+	west5 : 15:31:53.896839783	west6 : 15:31:53.896862917	+   7
+	west4 : 15:31:53.896751101	west6 : 15:31:53.896870074	+   4
+	west5 : 15:31:53.896883169	west5 : 15:31:53.896883169	+ - 0
+	west4 : 15:31:53.896751356	west6 : 15:31:53.896997799	  - 1
+	west6 : 15:31:53.896997799	west6 : 15:31:53.897004771	+   5
+	west5 : 15:31:53.897057484	west5 : 15:31:53.897057484	+ - 0		//2 folgenden Zeilen beim bearbeiten unbemerkt verloren
+
+	Es fällt also direkt auf, dass die Reihenfolge der Ausgabe nicht mit den Zeitstempeln übereinstimmt.
+	Auch fällt auf, dass der Knoten "west3" stehts zu erst mit allen 4 Ausführungen ist.
+	Tendenziell gilt auch, dass west3 vor west4 vor west5 vor west6 fertig ist.
+	Dies hat vermutlich mit der sequentiellen Zuweisung der Aufgaben zu den Knoten zu tun, die eventuell aus einer sortierten Liste gewählt werden.
+
+	Die Ausgabe in timescript.out muss zudem ebenfalls sequentiell koordiniert werden, wordurch vermutlich die Reihenfolge der Ausgabe beeinflusst wird.
+
+Frage 2: timescript.out im timescript erzeugen?
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+	Ja, das ist möglich. Wenn man statt "echo ..." (also nur auf stdout schreibend) "echo ... >> FILE" benutzt, so wird der Output in einer Datei FILE abgelget (Selbes Verzeichnis in dem sbatch aufgerufen wurde - lokal). In diesem Fall wird der Output sogar zeitlich korrekt sortiert ausgegeben. Es scheint dadurch auch nicht sequentliell gearbeitet worden zu sein, da die Knoten nicht sortiert sind. Allerdings scheinen so einige Ausgaben verloren zu gehen:
+
+	west4 : 18:02:46.103288040
+	west4 : 18:02:46.103425790
+	west4 : 18:02:46.103386368
+	west4 : 18:02:46.103388835
+	west6 : 18:02:46.111864165
+	west5 : 18:02:46.112391260
+	west5 : 18:02:46.112444813
+	west5 : 18:02:46.112440536
+	west7 : 18:02:46.113030893
+	west7 : 18:02:46.113057153
+	west7 : 18:02:46.113062071	// 5 Ausgaben fehlen
+
+	west4 : 18:03:41.920332645
+	west4 : 18:03:41.920453778
+	west4 : 18:03:41.920938786
+	west4 : 18:03:41.920983026
+	west6 : 18:03:41.922632747
+	west6 : 18:03:41.922599173
+	west7 : 18:03:41.923796152
+	west6 : 18:03:41.923779516
+	west5 : 18:03:41.923536303
+	west5 : 18:03:41.923527087	// 6 Ausgaben fehlen
+
+	west4 : 18:04:20.232698831
+	west4 : 18:04:20.233041148
+	west4 : 18:04:20.232946145
+	west4 : 18:04:20.233161058
+	west5 : 18:04:20.243498881
+	west5 : 18:04:20.243551660
+	west5 : 18:04:20.243901363
+	west5 : 18:04:20.244413692
+	west6 : 18:04:20.243861818	// 7 Ausgaben fehlen
+
+	west4 : 18:04:55.291605703
+	west4 : 18:04:55.292507644
+	west4 : 18:04:55.292908269
+	west4 : 18:04:55.294930692
+	west7 : 18:04:55.295470667
+	west7 : 18:04:55.295735947
+	west7 : 18:04:55.295553181
+	west5 : 18:04:55.296095428
+	west5 : 18:04:55.296865975
+	west5 : 18:04:55.297054382	// 6 Ausgaben fehlen
+
+	west4 : 18:05:54.418375866
+	west4 : 18:05:54.418749948
+	west4 : 18:05:54.418844715
+	west4 : 18:05:54.418697553
+	west5 : 18:05:54.427635888
+	west5 : 18:05:54.427723238
+	west6 : 18:05:54.428458789
+	west6 : 18:05:54.428909706
+	west6 : 18:05:54.428986272
+	west6 : 18:05:54.428950266	// 6 Ausgaben fehlen

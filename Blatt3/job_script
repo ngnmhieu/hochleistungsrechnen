@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# Vier Nodes nutzen
+# 4 Knoten
 #SBATCH -N 4
 
-# 4x auf jedem Node
+# 16 tasks
 #SBATCH -n 16
 
-# 4 pro Node
+# je 4 tasks/node
 #SBATCH --ntasks-per-node 4
 
-# west partition
+# Auf partition west
 #SBATCH --partition=west
 
-# Output in timescript.out
+# Nach timescript.out schreiben
 #SBATCH -o timescript.out
 
-# script ausfuehren
+# ausführen
 srun timescript
 
-# fertig ins script schreiben
+# "fertig" nach job_script.out schreiben
 echo fertig > job_script.out
