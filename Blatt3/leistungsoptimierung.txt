@@ -4,12 +4,13 @@ Das Programm ist mit folgenden Flags kompiliert: -pg -std=c11 -pedantic -Wall -W
 
 2. Profiling mit gprof:
 """""""""""""""""""""""""""
+gprof zeigt eine Liste von den aufgerufenen Funktionen zusammen mit Informationen bzgl. der Laufzeit wie die Laufzeit der Funktion, kumulierte Laufzeit, Anzahl von Aufrufe, ... Die Liste wird nach Laufzeit sortiert. Darueber hinaus stellt gprof auch diese Informationen nochmal in einem Aufrufhierachie, mit der man festellen kann, welche Funktion von welcher Funktion aufgerufen wird.
 
 Das Programm verbringt die meiste Zeit (94,64%) in der `calculate` Funktion, die nur einmal aufgerufen wird. Der Rest der Zeit verbringt das Programm in `getResiduum`, die aber ca. 2,7 Millionen mal aufgerufen wird.
 
 3. Profiling mit perf:
 """"""""""""""""""""""""""""
-Todo
+TODO
 
 4. Optimierung des Programms
 """"""""""""""""""""""""""""
