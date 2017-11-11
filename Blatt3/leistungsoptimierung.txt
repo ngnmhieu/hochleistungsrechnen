@@ -1,0 +1,17 @@
+1. Kompilieren
+"""""""""""""""""""""""""""
+Das Programm ist mit folgenden Flags kompiliert: -pg -std=c11 -pedantic -Wall -Wextra
+
+2. Profiling mit gprof:
+"""""""""""""""""""""""""""
+Das Programm verbringt die meiste Zeit (94,64%) in der `calculate` Funktion, die nur einmal aufgerufen wird. Der Rest der Zeit verbringt das Programm in `getResiduum`, die aber ca. 2,7 Millionen mal aufgerufen wird.
+
+Aus diesem Ergebnis ist offensichlicht `calculate` zu optimieren und ggf. `getResiduum`.
+
+3. Optimierung des Programms
+""""""""""""""""""""""""""""
+Die Schleifen in der `calculate` Funktion werden so konstruiert, dass die Matrix-Elementen spaltenweise zugeriffen werden, d.h. der Code der inneren Schleife geht die Elementen in einer Spalten durch. Da Arrays in C zeilenweise im Hauptspeicher gespeichert werden, der Cache wird besser ausgenutzt (mehr Cache-Hit), wenn auf die Elementen auch zeilenweise zugegriffen wird.
+
+Erste Optimierung: Die For-Schleife mit `i` und `j` austauschen.
+
+
