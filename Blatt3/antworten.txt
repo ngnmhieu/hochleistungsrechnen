@@ -68,7 +68,7 @@
 
 9) Mehrere Jobs/User per Knoten:
 """"""""""""""""""""""""""""""""
-	Ja.
+	Nein, die Knoten werden exklusiv an einen Nutzer bzw. Job vergeben.
 
 10) detailierter Job-Status:
 """"""""""""""""""""""""""""
@@ -83,7 +83,7 @@
 
 	Backfill Scheduling schaut sich alle Jobs an (laufenden und ausstehenden). Die ausstehenden Jobs
 	werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
-	höher priorisierten Jobs beeinträchtigen, dann wird er ausgeführt.
+	höher priorisierten Jobs beeinträchtigen, dann wird er nichtausgeführt.
 
 	Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
 
