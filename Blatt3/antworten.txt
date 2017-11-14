@@ -85,7 +85,7 @@
 	werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
 	höher priorisierten Jobs beeinträchtigen, dann wird er nicht ausgeführt.
 
-	Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
+	Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen. Man muss die Zeit von Job angeben, wenn man das unterschaetz wird das gekillt.
 
 12) Knoten Allokation + Ausfuehrung hostname:
 """"""""""""""""""""""""""""""""""""""""""""
