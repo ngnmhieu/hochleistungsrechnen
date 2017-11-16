@@ -17,4 +17,4 @@ Was könnten wir verbessern?
 - In Aufgabe 1.7 wäre ein Hinweis auf die Verwendung von ssh -AY eventuell hilfreich.
 
 Was hat Ihnen besonders gut gefallen?
-- Das Parallele ausführen der Prozesse (sehr interessant)
+- Das Parallele ausführen der Prozesse (sehr interessant).
