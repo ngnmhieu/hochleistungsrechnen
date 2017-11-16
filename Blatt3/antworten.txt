@@ -83,7 +83,7 @@
 
 	Backfill Scheduling schaut sich alle Jobs an (laufenden und ausstehenden). Die ausstehenden Jobs
 	werden nach Priorität sortiert. Wenn ein ausstehender Job die beabsichtliche Startzeit anderer
-	höher priorisierten Jobs beeinträchtigen, dann wird er ausgeführt.
+	höher priorisierten Jobs beeinträchtigen, dann wird er nicht ausgeführt.
 
 	Bei Builtin Scheduling werden alle Jobs strikt nach Priorität ausgeführt, was die Ausnutzung des System beeinflussen.
 
