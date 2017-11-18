@@ -261,8 +261,7 @@ omp_set_num_threads(options->number);
 
     #pragma omp parallel for private(i, j, star, residuum) \
          schedule(dynamic, 1) \
-         reduction(max:maxresiduum) \
-         collapse (2)
+         reduction(max:maxresiduum)
 		for (i = 1; i < N; i++)
 		{
 			double fpisin_i = 0.0;
