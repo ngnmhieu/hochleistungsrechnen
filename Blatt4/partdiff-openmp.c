@@ -134,7 +134,7 @@ allocateMatrices (struct calculation_arguments* arguments)
 		 *	num_matrices is 1 or 2, fork inside outer loop
 		 * +++
 		 */
-		#pragma omp parallel for
+		#pragma omp parallel for private(j)
 		for (j = 0; j <= N; j++)
 		{
 			arguments->Matrix[i][j] = arguments->M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
@@ -162,7 +162,7 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 		 *	num_matrices is 1 or 2, fork inside outer loop
 		 * +++
 		 */
-		#pragma omp parallel for private(j)
+		#pragma omp parallel for private(i, j) collapse(2)
 		for (i = 0; i <= N; i++)
 		{
 			for (j = 0; j <= N; j++)
@@ -181,7 +181,7 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 			 *	num_matrices is 1 or 2, fork inside outer loop
 			 * +++
 			 */
-			#pragma omp parallel for
+			#pragma omp parallel for private(i)
 			for (i = 0; i <= N; i++)
 			{
 				Matrix[g][i][0] = 1.0 - (h * i);
