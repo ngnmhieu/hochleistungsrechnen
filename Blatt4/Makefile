@@ -4,40 +4,37 @@ CC = gcc
 # Compiler flags, paths and libraries
 CFLAGS = -std=c11 -pedantic -Wall -Wextra -O3 -ggdb
 LFLAGS = $(CFLAGS)
+OMP_CFLAGS = $(CFLAGS) -fopenmp
+OMP_LFLAGS = $(OMP_CFLAGS)
 LIBS   = -lm
-OCFLAGS = $(CFLAGS) -fopenmp
-OLFLAGS = $(OCFLAGS)
 
-TGTS = partdiff-seq.c askparams.c
-TGTS2 = partdiff-openmp.c askparams.c
+TARGET_SEQ = partdiff-seq
+TARGET_OMP = partdiff-openmp
 
-OBJS = partdiff-seq.o askparams.o
-OBJS2 = partdiff-openmp.o askparams.o
+OBJ_SEQ = partdiff-seq.o askparams.o
+OBJ_OMP = partdiff-openmp.o askparams.o
 
-# Targets ...
 all: partdiff-seq partdiff-openmp
 
-add:
-	$(CC) -c $(CFLAGS) $(TGTS)
+askparams.o:
+	$(CC) -c $(CFLAGS) askparams.c
 
-partdiff-seq: add Makefile
-	$(CC) $(LFLAGS) -o $@ $(OBJS) $(LIBS)
+partdiff-seq: $(OBJ_SEQ)
+		$(CC) $(LFLAGS) -o $@ $(OBJ_SEQ) $(LIBS)
 
-add2:
-	$(CC) -c $(OCFLAGS) $(TGTS2)
+partdiff-seq.o:
+	$(CC) -c $(CFLAGS) partdiff-seq.c
 
-partdiff-openmp: add2 Makefile
-	$(CC) $(OLFLAGS) -o $@ $(OBJS2) $(LIBS)
+partdiff-openmp: $(OBJ_OMP)
+		$(CC) $(OMP_LFLAGS) -o $@ $(OBJ_OMP) $(LIBS)
 
-
-partdiff-seq.o: partdiff-seq.c Makefile
-
-askparams.o: askparams.c Makefile
+partdiff-openmp.o:
+	$(CC) -c $(OMP_CFLAGS) partdiff-openmp.c 
 
 # Rule to create *.o from *.c
 %.o: %.c
 	$(CC) -c $(CFLAGS) $*.c
 
 clean:
-	$(RM) $(OBJS)
-	$(RM) $(TGTS)
+	$(RM) $(OBJ_SEQ) $(OBJ_OMP)
+	$(RM) $(TARGET_SEQ) $(TARGET_OMP)
