@@ -162,7 +162,7 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 		 *	num_matrices is 1 or 2, fork inside outer loop
 		 * +++
 		 */
-		#pragma omp parallel for private(i, j) collapse(2)
+		#pragma omp parallel for private(i, j)
 		for (i = 0; i <= N; i++)
 		{
 			for (j = 0; j <= N; j++)
