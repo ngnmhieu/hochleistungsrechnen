@@ -1,0 +1,8 @@
+#!/bin/bash
+name=messung2.out
+for i in 2 4 8 16 32 64 128 256 512 1024
+do
+    echo "$i Interlines:" >> $name
+    /usr/bin/time -f%e -ao $name ./partdiff-openmp 12 2 $i 2 2 2560
+    echo "" >> $name
+done
