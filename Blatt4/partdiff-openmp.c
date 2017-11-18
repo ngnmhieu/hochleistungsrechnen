@@ -249,8 +249,8 @@ omp_set_num_threads(options->number);
 	 * +++
 	 * 	Own versions of j, star and residuum are needed for each thread
 	 * 		-> declare private <-> don't share
-	 * 	i is part of the loop and created thread localy (p198f script)
-	 *
+	 * 	i is part of the loop and would be created thread localy (p198f script),
+	 * 		but is declared before loop -> private(i)
 	 * 	chucks are allocated dynamically
 	 * 	to get the maximum value of residuum (maxresiduum) for the team,
 	 * 		we first get the maximum for each member (thread), and
