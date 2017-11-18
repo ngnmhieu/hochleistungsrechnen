@@ -9,25 +9,25 @@ OCFLAGS = $(CFLAGS) -fopenmp
 OLFLAGS = $(OCFLAGS)
 
 TGTS = partdiff-seq.c askparams.c
-OTGTS = partdiff-openmp.c askparams.c
+TGTS2 = partdiff-openmp.c askparams.c
 
 OBJS = partdiff-seq.o askparams.o
-OOBJS = partdiff-openmp.o askparams.o
+OBJS2 = partdiff-openmp.o askparams.o
 
 # Targets ...
 all: partdiff-seq partdiff-openmp
 
-link:
+add:
 	$(CC) -c $(CFLAGS) $(TGTS)
 
-partdiff-seq: link Makefile
+partdiff-seq: add Makefile
 	$(CC) $(LFLAGS) -o $@ $(OBJS) $(LIBS)
 
-olink:
-	$(CC) -c $(OCFLAGS) $(OTGTS)
+add2:
+	$(CC) -c $(OCFLAGS) $(TGTS2)
 
-partdiff-openmp: olink Makefile
-	$(CC) $(OLFLAGS) -o $@ $(OOBJS) $(LIBS)
+partdiff-openmp: add2 Makefile
+	$(CC) $(OLFLAGS) -o $@ $(OBJS2) $(LIBS)
 
 
 partdiff-seq.o: partdiff-seq.c Makefile
