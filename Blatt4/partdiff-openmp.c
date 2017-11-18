@@ -252,6 +252,12 @@ omp_set_num_threads(options->number);
 	 * 	i is part of the loop and would be created thread localy (p198f script),
 	 * 		but is declared before loop -> private(i)
 	 * 	chucks are allocated dynamically
+	 * 		[
+	 * 			it was planned to calculate chunksize depending on N and num_threads
+	 *			but we ran out of time.
+	 *			Now each thread handles 1 i-loop and has to get a new one after that.
+	 *			This causes some overhead. (more sheduling)
+	 * 		]
 	 * 	to get the maximum value of residuum (maxresiduum) for the team,
 	 * 		we first get the maximum for each member (thread), and
 	 * 		select the maximum of the team at the end (reduction(max:maxresiduum))
