@@ -1,0 +1,39 @@
+Mittelwerte nach 3 messungen von
+./partdiff-openmp $i 2 512 2 2 2560
+wobei $i die Anzahl der Threads ist.
+
+1 Threads:
+1391.98
+
+2 Threads:
+702.11
+
+3 Threads:
+468.06
+
+4 Threads:
+350.73
+
+5 Threads:
+281.2
+
+6 Threads:
+234.38
+
+7 Threads:
+215.97
+
+8 Threads:
+201.57
+
+9 Threads:
+188.54
+
+10 Threads:
+177.92
+
+11 Threads:
+169.12
+
+12 Threads:
+161.31
