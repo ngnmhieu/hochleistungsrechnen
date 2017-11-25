@@ -191,6 +191,7 @@ typedef struct {
    struct options const* options;
    int rows_per_thread;
    int N;
+   pthread_mutex_t *mutex;
 } thread_data;
 
 void* calculate_row (void* arg)
@@ -210,6 +211,7 @@ void* calculate_row (void* arg)
   int term_iteration            = data->term_iteration;
   struct options const* options = data->options;
   double *maxresiduum           = data->maxresiduum;
+  pthread_mutex_t *mutex         = data->mutex;
 
   int start_row = tid * rows_per_thread + 1;
   int end_row = (tid + 1) * rows_per_thread + 1;
@@ -241,7 +243,9 @@ void* calculate_row (void* arg)
       {
         residuum = Matrix_In[i][j] - star;
         residuum = (residuum < 0) ? -residuum : residuum;
+        pthread_mutex_lock (mutex);
         *maxresiduum = (residuum < *maxresiduum) ? *maxresiduum : residuum;
+        pthread_mutex_unlock (mutex);
       }
 
       Matrix_Out[i][j] = star;
@@ -287,6 +291,9 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 		fpisin = 0.25 * TWO_PI_SQUARE * h * h;
 	}
 
+  /* Mutex for maxresiduum */
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 	while (term_iteration > 0)
 	{
     /* Debug message */
@@ -311,6 +318,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
       data->options = options;
       data->rows_per_thread = rows_per_thread;
       data->N = N;
+      data->mutex = &mutex;
       pthread_create(&threads[i], NULL, calculate_row, (void*) data);
 		}
 
