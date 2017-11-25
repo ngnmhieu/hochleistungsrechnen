@@ -181,7 +181,7 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 /* calculate: solves the equation                                           */
 /* ************************************************************************ */
 typedef struct {
-   int  thread_id;
+   int tid;
    double** Matrix_In;
    double** Matrix_Out;
    double fpisin;
@@ -189,8 +189,7 @@ typedef struct {
    int term_iteration;
    double *maxresiduum;
    struct options const* options;
-   int start;
-   int end;
+   int rows_per_thread;
    int N;
 } thread_data;
 
@@ -200,16 +199,26 @@ void* calculate_row (void* arg)
 
 	double star; /* four times center value minus 4 neigh.b values */
   double residuum; /* residuum of current iteration */
-  double **Matrix_Out = data->Matrix_In;
-  double **Matrix_In  = data->Matrix_Out;
-  double fpisin = data->fpisin;
-  double pih = data->pih;
-  double N = data->N;
-  double term_iteration = data->term_iteration;
-  struct options const* options = data->options;
-  double *maxresiduum = data->maxresiduum;
 
-  for (int i = data->start; i < data->end; i++)
+  int tid                       = data->tid;
+  int N                         = data->N;
+  int rows_per_thread           = data->rows_per_thread;
+  double **Matrix_In            = data->Matrix_In;
+  double **Matrix_Out           = data->Matrix_Out;
+  double fpisin                 = data->fpisin;
+  double pih                    = data->pih;
+  int term_iteration            = data->term_iteration;
+  struct options const* options = data->options;
+  double *maxresiduum           = data->maxresiduum;
+
+  int start_row = tid * rows_per_thread + 1;
+  int end_row = (tid + 1) * rows_per_thread + 1;
+  end_row = end_row < N ? end_row : N;
+
+  /* Debug message */
+  /* printf("[TID = %d] Starting calculation from row %d to %d\n", tid, start_row, end_row - 1); */
+
+  for (int i = start_row; i < end_row; i++)
   {
     double fpisin_i = 0.0;
 
@@ -280,24 +289,33 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 
 	while (term_iteration > 0)
 	{
+    /* Debug message */
+    /* printf("Iteration %d ; N = %d\n", term_iteration, N); */
+
 		double** Matrix_Out = arguments->Matrix[m1];
 		double** Matrix_In  = arguments->Matrix[m2];
 
 		maxresiduum = 0;
 
-    printf("Row per thread %d\n", rows_per_thread);
-
     /* loop over all threads */
-		for (i = 0; i < options->number; i++)
+		for (i = 0; i < (int) options->number; i++)
 		{
-      printf("Creating thread #%d", i);
-      thread_data data;
-      /* data-> */
-      pthread_create(&threads[i], NULL, calculate_row, (void*) t);
+      thread_data *data = (thread_data*) malloc(sizeof(thread_data));
+      data->tid = i;
+      data->Matrix_In = Matrix_In;
+      data->Matrix_Out = Matrix_Out;
+      data->fpisin = fpisin;
+      data->pih = pih;
+      data->term_iteration = term_iteration;
+      data->maxresiduum = &maxresiduum;
+      data->options = options;
+      data->rows_per_thread = rows_per_thread;
+      data->N = N;
+      pthread_create(&threads[i], NULL, calculate_row, (void*) data);
 		}
 
     /* joining all threads */
-		for (i = 0; i < options->number; i++)
+		for (i = 0; i < (int) options->number; i++)
 		{
       pthread_join(threads[i], NULL);
 		}
