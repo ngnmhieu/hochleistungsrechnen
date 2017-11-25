@@ -29,7 +29,7 @@ partdiff-posix: $(OBJ_PX)
 		$(CC) $(PX_LFLAGS) -o $@ $(OBJ_PX) $(LIBS)
 
 partdiff-posix.o:
-	$(CC) -c $(PX_CFLAGS) partdiff-posix.c 
+	$(CC) -c $(PX_CFLAGS) partdiff-posix.c
 
 # Rule to create *.o from *.c
 %.o: %.c
