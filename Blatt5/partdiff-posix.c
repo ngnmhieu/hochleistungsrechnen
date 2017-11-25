@@ -192,11 +192,11 @@ typedef struct {
    int rows_per_thread;
    int N;
    pthread_mutex_t *mutex;
-} thread_data;
+} calculate_row_data;
 
 void* calculate_row (void* arg)
 {
-  thread_data *data = (thread_data*) arg;
+  calculate_row_data *data = (calculate_row_data*) arg;
 
 	double star; /* four times center value minus 4 neigh.b values */
   double residuum; /* residuum of current iteration */
@@ -307,7 +307,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
     /* loop over all threads */
 		for (i = 0; i < (int) options->number; i++)
 		{
-      thread_data *data = (thread_data*) malloc(sizeof(thread_data));
+      calculate_row_data *data = (calculate_row_data*) malloc(sizeof(calculate_row_data));
       data->tid = i;
       data->Matrix_In = Matrix_In;
       data->Matrix_Out = Matrix_Out;
