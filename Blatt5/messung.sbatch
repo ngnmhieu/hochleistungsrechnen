@@ -4,6 +4,6 @@
 #SBATCH -c 12
 #SBATCH --ntasks-per-node 1
 
-srun messung1
+srun messung
 
 echo fertig > job.out

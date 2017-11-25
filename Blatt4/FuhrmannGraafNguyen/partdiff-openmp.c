@@ -80,6 +80,10 @@ freeMatrices (struct calculation_arguments* arguments)
 {
 	uint64_t i;
 
+	/* +++
+	 *	num_matrices is 1 or 2, no need to fork
+	 * +++
+	 */
 	for (i = 0; i < arguments->num_matrices; i++)
 	{
 		free(arguments->Matrix[i]);
@@ -126,6 +130,11 @@ allocateMatrices (struct calculation_arguments* arguments)
 	{
 		arguments->Matrix[i] = allocateMemory((N + 1) * sizeof(double*));
 
+		/* +++
+		 *	num_matrices is 1 or 2, fork inside outer loop
+		 * +++
+		 */
+		#pragma omp parallel for private(j)
 		for (j = 0; j <= N; j++)
 		{
 			arguments->Matrix[i][j] = arguments->M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
@@ -149,6 +158,11 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	/* initialize matrix/matrices with zeros */
 	for (g = 0; g < arguments->num_matrices; g++)
 	{
+		/* +++
+		 *	num_matrices is 1 or 2, fork inside outer loop
+		 * +++
+		 */
+		#pragma omp parallel for private(i, j)
 		for (i = 0; i <= N; i++)
 		{
 			for (j = 0; j <= N; j++)
@@ -163,6 +177,11 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	{
 		for (g = 0; g < arguments->num_matrices; g++)
 		{
+			/* +++
+			 *	num_matrices is 1 or 2, fork inside outer loop
+			 * +++
+			 */
+			#pragma omp parallel for private(i)
 			for (i = 0; i <= N; i++)
 			{
 				Matrix[g][i][0] = 1.0 - (h * i);
@@ -227,11 +246,28 @@ omp_set_num_threads(options->number);
 		/* over all rows */
 
 	/*
-    Fuer die Aufgabe haben wir ca. 2,5 Stunde gebraucht, sich mit der Dokumentation vertraut zu machen und das dann auf dem Cluster auszuführen war schon sehr zeitintensiv.
-    Fuer die Fehlersuche haben wir im Vergleich nicht sehr lange gebraucht. Sie war nur bei maxresiduum noetig und hat um die 15 Minuten gedauert.
+	 * +++
+	 * 	Own versions of j, star and residuum are needed for each thread
+	 * 		-> declare private <-> don't share
+	 * 	i is part of the loop and would be created thread localy (p198f script),
+	 * 		but is declared before loop -> private(i)
+	 * 	chucks are allocated dynamically
+	 * 		[
+	 * 			it was planned to calculate chunksize depending on N and num_threads
+	 *			but we ran out of time.
+	 *			Now each thread handles 1 i-loop and has to get a new one after that.
+	 *			This causes some overhead. (more sheduling)
+	 * 		]
+	 * 	to get the maximum value of residuum (maxresiduum) for the team,
+	 * 		we first get the maximum for each member (thread), and
+	 * 		select the maximum of the team at the end (reduction(max:maxresiduum))
+	 * 		(implicit private)
+	 * +++
 	*/
 
-	#pragma omp parallel for private(i, j, star, residuum), schedule(dynamic, 1), reduction(max:maxresiduum)
+    #pragma omp parallel for private(i, j, star, residuum) \
+         schedule(dynamic, 1) \
+         reduction(max:maxresiduum)
 		for (i = 1; i < N; i++)
 		{
 			double fpisin_i = 0.0;
@@ -363,6 +399,8 @@ DisplayMatrix (struct calculation_arguments* arguments, struct calculation_resul
 
 	printf("Matrix:\n");
 
+	// +++ Order of prints are relevant, no complex calculations, only few itterations
+	// 	-> no fork
 	for (y = 0; y < 9; y++)
 	{
 		for (x = 0; x < 9; x++)
