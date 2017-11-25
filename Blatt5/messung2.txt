@@ -1,0 +1,36 @@
+1 Threads:
+590.00
+
+2 Threads:
+305.75
+
+3 Threads:
+206.17
+
+4 Threads:
+162.93
+
+5 Threads:
+137.91
+
+6 Threads:
+110.68
+
+7 Threads:
+121.55
+
+8 Threads:
+109.59
+
+9 Threads:
+102.46
+
+10 Threads:
+98.17
+
+11 Threads:
+93.35
+
+12 Threads:
+82.24
+
