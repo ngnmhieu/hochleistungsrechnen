@@ -30,11 +30,20 @@ echo "\nTest 1: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $
 ./partdiff-posix $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $POSIX_OUT
 diff $SEQ_OUT $POSIX_OUT
 
+NUM_THREAD=8
+INTERLINES=50
+FUNC=1
+ITERATIONS=200
+echo "\nTest 2: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+./partdiff-seq   $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $SEQ_OUT
+./partdiff-posix $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $POSIX_OUT
+diff $SEQ_OUT $POSIX_OUT
+
 NUM_THREAD=12
 INTERLINES=64
 FUNC=2
 ITERATIONS=1000
-echo "\nTest 2: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "\nTest 3: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
 ./partdiff-seq   $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $SEQ_OUT
 ./partdiff-posix $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $POSIX_OUT
 diff $SEQ_OUT $POSIX_OUT
@@ -43,7 +52,7 @@ NUM_THREAD=12
 INTERLINES=200
 FUNC=2
 ITERATIONS=500
-echo "\nTest 3: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "\nTest 4: Threads = $NUM_THREAD ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
 ./partdiff-seq   $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $SEQ_OUT
 ./partdiff-posix $NUM_THREAD 2 $INTERLINES $FUNC 2 $ITERATIONS > $POSIX_OUT
 diff $SEQ_OUT $POSIX_OUT

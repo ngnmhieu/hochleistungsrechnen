@@ -156,13 +156,13 @@ void* init_rows (void* arg)
   double*** Matrix    = data->Matrix;
 
   int start_row = tid * rows_per_thread;
-  int end_row = (tid + 1) * rows_per_thread - 1;
-  end_row = end_row < N ? end_row : N;
+  int end_row = (tid + 1) * rows_per_thread;
+  end_row = end_row < (N+1) ? end_row : (N+1);
 
   /* Debug message */
-  /* printf("[TID = %d] Starting init matrix from row %d to %d\n", tid, start_row, end_row); */
+  /* printf("[TID = %d] Starting init matrix from row %d to %d\n", tid, start_row, end_row - 1); */
 
-  for (int i = start_row; i <= end_row; i++)
+  for (int i = start_row; i < end_row; i++)
   {
     for (int j = 0; j <= N; j++)
     {
@@ -185,13 +185,13 @@ void* init_borders (void* arg)
   double*** Matrix    = data->Matrix;
 
   int start_row = tid * rows_per_thread;
-  int end_row = (tid + 1) * rows_per_thread - 1;
-  end_row = end_row < N ? end_row : N;
+  int end_row = (tid + 1) * rows_per_thread;
+  end_row = end_row < (N+1) ? end_row : (N+1);
 
   /* Debug message */
-  /* printf("[TID = %d] Starting init matrix border from row %d to %d\n", tid, start_row, end_row); */
+  /* printf("[TID = %d] Starting init matrix border from row %d to %d\n", tid, start_row, end_row - 1); */
 
-  for (int i = start_row; i <= end_row; i++)
+  for (int i = start_row; i < end_row; i++)
   {
     Matrix[g][i][0] = 1.0 - (h * i);
     Matrix[g][i][N] = h * i;
@@ -213,11 +213,15 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	double*** Matrix = arguments->Matrix;
 
   pthread_t threads[options->number];
-  int rows_per_thread = (int) ceil(1.0 * N / options->number);
+  int rows_per_thread = (int) ceil(1.0 * (N + 1) / options->number);
 
 	/* initialize matrix/matrices with zeros */
 	for (g = 0; g < arguments->num_matrices; g++)
 	{
+
+    /* Debug message */
+    /* printf("Matrix g = %ld ; N+1= %ld; rows_per_thread = %d \n", g, N+1, rows_per_thread); */
+  
     /* iterate over all threads */
 		for (i = 0; i < options->number; i++)
 		{
@@ -243,32 +247,27 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	{
 		for (g = 0; g < arguments->num_matrices; g++)
 		{
-      /* iterate over all threads */
-      /* for (i = 0; i < options->number; i++) */
-			/* { */
-      /*   init_matrix_data *data = (init_matrix_data*) malloc(sizeof(init_matrix_data)); */
-      /*   data->tid = i; */
-      /*   data->N = N; */
-      /*   data->g = g; */
-      /*   data->h = h; */
-      /*   data->rows_per_thread = rows_per_thread; */
-      /*   data->Matrix = Matrix; */
-      /*   pthread_create(&threads[i], NULL, init_borders, (void*) data); */
-			/* } */
-      /*  */
-      /* #<{(| joining all threads |)}># */
-      /* for (i = 0; i < options->number; i++) */
-      /* { */
-      /*   pthread_join(threads[i], NULL); */
-      /* } */
+      /* Debug message */
+      /* printf("Matrix g = %ld ; N+1= %ld; rows_per_thread = %d \n", g, N+1, rows_per_thread); */
 
-			for (i = 0; i <= N; i++)
+      /* iterate over all threads */
+      for (i = 0; i < options->number; i++)
 			{
-				Matrix[g][i][0] = 1.0 - (h * i);
-				Matrix[g][i][N] = h * i;
-				Matrix[g][0][i] = 1.0 - (h * i);
-				Matrix[g][N][i] = h * i;
+        init_matrix_data *data = (init_matrix_data*) malloc(sizeof(init_matrix_data));
+        data->tid = i;
+        data->N = N;
+        data->g = g;
+        data->h = h;
+        data->rows_per_thread = rows_per_thread;
+        data->Matrix = Matrix;
+        pthread_create(&threads[i], NULL, init_borders, (void*) data);
 			}
+
+      /* joining all threads */
+      for (i = 0; i < options->number; i++)
+      {
+        pthread_join(threads[i], NULL);
+      }
 
 			Matrix[g][N][0] = 0.0;
 			Matrix[g][0][N] = 0.0;
@@ -397,7 +396,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 	while (term_iteration > 0)
 	{
     /* Debug message */
-    /* printf("Iteration %d ; N = %d\n", term_iteration, N); */
+    /* printf("Iteration %d ; N = %d; rows_per_thread = %d \n", term_iteration, N, rows_per_thread); */
 
 		double** Matrix_Out = arguments->Matrix[m1];
 		double** Matrix_In  = arguments->Matrix[m2];
