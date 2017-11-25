@@ -136,25 +136,105 @@ allocateMatrices (struct calculation_arguments* arguments)
 /* ************************************************************************ */
 /* initMatrices: Initialize matrix/matrices and some global variables       */
 /* ************************************************************************ */
+typedef struct {
+  int tid;
+  int N;
+  int g;
+  double h;
+  int rows_per_thread;
+  double*** Matrix;
+} init_matrix_data;
+
+void* init_rows (void* arg)
+{
+  init_matrix_data *data = (init_matrix_data*) arg;
+
+  int tid             = data->tid;
+  int N               = data->N;
+  int g               = data->g;
+  int rows_per_thread = data->rows_per_thread;
+  double*** Matrix    = data->Matrix;
+
+  int start_row = tid * rows_per_thread;
+  int end_row = (tid + 1) * rows_per_thread - 1;
+  end_row = end_row < N ? end_row : N;
+
+  /* Debug message */
+  /* printf("[TID = %d] Starting init matrix from row %d to %d\n", tid, start_row, end_row); */
+
+  for (int i = start_row; i <= end_row; i++)
+  {
+    for (int j = 0; j <= N; j++)
+    {
+      Matrix[g][i][j] = 0.0;
+    }
+  }
+  free(data);
+  pthread_exit(NULL);
+}
+
+void* init_borders (void* arg)
+{
+  init_matrix_data *data = (init_matrix_data*) arg;
+
+  int tid             = data->tid;
+  int N               = data->N;
+  int g               = data->g;
+  double h            = data->h;
+  int rows_per_thread = data->rows_per_thread;
+  double*** Matrix    = data->Matrix;
+
+  int start_row = tid * rows_per_thread;
+  int end_row = (tid + 1) * rows_per_thread - 1;
+  end_row = end_row < N ? end_row : N;
+
+  /* Debug message */
+  /* printf("[TID = %d] Starting init matrix border from row %d to %d\n", tid, start_row, end_row); */
+
+  for (int i = start_row; i <= end_row; i++)
+  {
+    Matrix[g][i][0] = 1.0 - (h * i);
+    Matrix[g][i][N] = h * i;
+    Matrix[g][0][i] = 1.0 - (h * i);
+    Matrix[g][N][i] = h * i;
+  }
+  free(data);
+  pthread_exit(NULL);
+}
+
 static
 void
 initMatrices (struct calculation_arguments* arguments, struct options const* options)
 {
-	uint64_t g, i, j;                                /*  local variables for loops   */
+	uint64_t g, i;                                /*  local variables for loops   */
 
 	uint64_t const N = arguments->N;
 	double const h = arguments->h;
 	double*** Matrix = arguments->Matrix;
 
+  pthread_t threads[options->number];
+  int rows_per_thread = (int) ceil(1.0 * N / options->number);
+
 	/* initialize matrix/matrices with zeros */
 	for (g = 0; g < arguments->num_matrices; g++)
 	{
-		for (i = 0; i <= N; i++)
+    /* iterate over all threads */
+		for (i = 0; i < options->number; i++)
 		{
-			for (j = 0; j <= N; j++)
-			{
-				Matrix[g][i][j] = 0.0;
-			}
+      init_matrix_data *data = (init_matrix_data*) malloc(sizeof(init_matrix_data));
+      data->tid = i;
+      data->N = N;
+      data->g = g;
+      data->h = h;
+      data->rows_per_thread = rows_per_thread;
+      data->Matrix = Matrix;
+      pthread_create(&threads[i], NULL, init_rows, (void*) data);
+		}
+
+    /* joining all threads */
+		for (i = 0; i < options->number; i++)
+		{
+      pthread_join(threads[i], NULL);
 		}
 	}
 
@@ -163,6 +243,25 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	{
 		for (g = 0; g < arguments->num_matrices; g++)
 		{
+      /* iterate over all threads */
+      /* for (i = 0; i < options->number; i++) */
+			/* { */
+      /*   init_matrix_data *data = (init_matrix_data*) malloc(sizeof(init_matrix_data)); */
+      /*   data->tid = i; */
+      /*   data->N = N; */
+      /*   data->g = g; */
+      /*   data->h = h; */
+      /*   data->rows_per_thread = rows_per_thread; */
+      /*   data->Matrix = Matrix; */
+      /*   pthread_create(&threads[i], NULL, init_borders, (void*) data); */
+			/* } */
+      /*  */
+      /* #<{(| joining all threads |)}># */
+      /* for (i = 0; i < options->number; i++) */
+      /* { */
+      /*   pthread_join(threads[i], NULL); */
+      /* } */
+
 			for (i = 0; i <= N; i++)
 			{
 				Matrix[g][i][0] = 1.0 - (h * i);
@@ -211,7 +310,7 @@ void* calculate_row (void* arg)
   int term_iteration            = data->term_iteration;
   struct options const* options = data->options;
   double *maxresiduum           = data->maxresiduum;
-  pthread_mutex_t *mutex         = data->mutex;
+  pthread_mutex_t *mutex        = data->mutex;
 
   int start_row = tid * rows_per_thread + 1;
   int end_row = (tid + 1) * rows_per_thread + 1;
@@ -251,6 +350,7 @@ void* calculate_row (void* arg)
       Matrix_Out[i][j] = star;
     }
   }
+  free(data);
   pthread_exit(NULL);
 }
 

@@ -16,6 +16,9 @@ OBJ_PX = partdiff-posix.o askparams.o
 
 all: partdiff-seq partdiff-posix
 
+test: clean all
+	./test.sh
+
 askparams.o:
 	$(CC) -c $(CFLAGS) askparams.c
 
