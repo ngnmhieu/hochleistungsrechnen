@@ -111,13 +111,51 @@ allocateMemory (size_t size)
 /* ************************************************************************ */
 /* allocateMatrices: allocates memory for matrices                          */
 /* ************************************************************************ */
+typedef struct {
+  int tid;
+  int N;
+  int i;
+  int rows_per_thread;
+  double*** Matrix;
+  double *M;
+} allocate_matrix_data;
+
+void* allocate_submatrix (void* arg)
+{
+  allocate_matrix_data *data = (allocate_matrix_data*) arg;
+
+  int tid             = data->tid;
+  int N               = data->N;
+  int i               = data->i;
+  int rows_per_thread = data->rows_per_thread;
+  double*** Matrix    = data->Matrix;
+  double *M           = data->M;
+
+  int start_row = tid * rows_per_thread;
+  int end_row = (tid + 1) * rows_per_thread;
+  end_row = end_row < (N+1) ? end_row : (N+1);
+
+  /* Debug message */
+  /* printf("[TID = %d] Starting allocate matrix from row %d to %d\n", tid, start_row, end_row - 1); */
+
+  for (int j = start_row; j < end_row; j++)
+  {
+    Matrix[i][j] = M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
+  }
+  free(data);
+  pthread_exit(NULL);
+}
+
 static
 void
-allocateMatrices (struct calculation_arguments* arguments)
+allocateMatrices (struct calculation_arguments* arguments, struct options const* options)
 {
-	uint64_t i, j;
+	uint64_t i;
 
 	uint64_t const N = arguments->N;
+
+  pthread_t threads[options->number];
+  int rows_per_thread = (int) ceil(1.0 * (N + 1) / options->number);
 
 	arguments->M = allocateMemory(arguments->num_matrices * (N + 1) * (N + 1) * sizeof(double));
 	arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
@@ -126,9 +164,23 @@ allocateMatrices (struct calculation_arguments* arguments)
 	{
 		arguments->Matrix[i] = allocateMemory((N + 1) * sizeof(double*));
 
-		for (j = 0; j <= N; j++)
+    /* iterate over all threads */
+		for (int j = 0; j < (int) options->number; j++)
 		{
-			arguments->Matrix[i][j] = arguments->M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
+      allocate_matrix_data *data = (allocate_matrix_data*) malloc(sizeof(allocate_matrix_data));
+      data->tid = j;
+      data->N = N;
+      data->i = i;
+      data->rows_per_thread = rows_per_thread;
+      data->Matrix = arguments->Matrix;
+      data->M = arguments->M;
+      pthread_create(&threads[j], NULL, allocate_submatrix, (void*) data);
+		}
+
+    /* joining all threads */
+		for (int j = 0; j < (int) options->number; j++)
+		{
+      pthread_join(threads[j], NULL);
 		}
 	}
 }
@@ -555,7 +607,7 @@ main (int argc, char** argv)
 
 	initVariables(&arguments, &results, &options);
 
-	allocateMatrices(&arguments);
+	allocateMatrices(&arguments, &options);
 	initMatrices(&arguments, &options);
 
 	gettimeofday(&start_time, NULL);
