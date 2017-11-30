@@ -5,13 +5,17 @@ CC = mpicc
 CFLAGS = -pedantic -Wall -Wextra -O3 -ggdb
 LFLAGS = $(CFLAGS)
 
-all: timempi
+all: timempi timempi2
 
 timempi: timempi.o
 	$(CC) $(LFLAGS) -o $@ timempi.o
 
-timempi.o: 
-	$(CC) -c $(CFLAGS) timempi.c
+timempi2: timempi2.o
+	$(CC) $(LFLAGS) -o $@ timempi2.o
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c
 
 clean:
-	rm timempi.o timempi
+	rm -f *.o 
+	rm -f timempi timempi2
