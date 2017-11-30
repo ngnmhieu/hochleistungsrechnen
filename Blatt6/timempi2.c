@@ -1,54 +1,57 @@
 #include <stdio.h>
 #include <mpi.h>
-#include <unistd.h>
-#include <limits.h>
-#include <sys/time.h>
+#include <unistd.h>		// library for gethostname()
+#include <limits.h>		// constants, eg for INT_MAX
+#include <sys/time.h>		// library for gettimeofday()
 #define TIMESTR_MAX_LEN 300
 #define ROOT_PID 0
 
 int main(int argc, char **argv)
 {
   int pid, num_procs;
-
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &pid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-  
-  int local_usec = INT_MAX;
+  int loc_usec = INT_MAX;
   int min_usec;
 
+  /* Spawning slave processes, based on -np flag */
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &pid);		// get rank for every process
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);	// get number of processes
+
+  /* master */
   if (pid == ROOT_PID)
   {
-    MPI_Status status;
     char timestr[TIMESTR_MAX_LEN];
+    MPI_Status status;
 
-    for (int i = 1; i < num_procs; i++)
-    {
-      MPI_Recv(timestr, TIMESTR_MAX_LEN, MPI_CHAR, i, 0, MPI_COMM_WORLD, &status); 
+    for (int i = 1; i < num_procs; i++) {
+      /* receive data from process #i -> ordered */
+      MPI_Recv(timestr, TIMESTR_MAX_LEN, MPI_CHAR, i, 0, MPI_COMM_WORLD, &status);
       printf("%s\n", timestr);
     }
   }
+  /* slaves */
   else
   {
-    /* Hostname holen */
-    char hostname[HOST_NAME_MAX];
+    /* get hostname */
+    char hostname[HOST_NAME_MAX];		// HOST_NAME_MAX defined with value 64 on Linux
     gethostname(hostname, HOST_NAME_MAX);
 
-    /* Zeit holen */
+    /* get time */
     struct timeval tv;
     struct timezone tz;
     gettimeofday(&tv, &tz);
-    local_usec = tv.tv_usec;
+    loc_usec = tv.tv_usec;
 
     char timestr[TIMESTR_MAX_LEN];
+    /* write to buffer */
     sprintf(timestr, "[pid = %d] %s: %ld.%ld", pid, hostname, tv.tv_sec, tv.tv_usec);
-  
-    /* Ergebnis an dem Process 0 schicken */
-    MPI_Send(timestr, TIMESTR_MAX_LEN, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+
+    /* send data to master */
+    MPI_Send(timestr, TIMESTR_MAX_LEN, MPI_CHAR, ROOT_PID, 0, MPI_COMM_WORLD);
   }
 
-  /* den kleinsten Mikrosekunden-Anteil berechnen */
-  MPI_Reduce(&local_usec, &min_usec, 1, MPI_INT, MPI_MIN, ROOT_PID, MPI_COMM_WORLD); 
+  /* get min microsec */
+  MPI_Reduce(&loc_usec, &min_usec, 1, MPI_INT, MPI_MIN, ROOT_PID, MPI_COMM_WORLD);
   if (pid == ROOT_PID) {
     printf("Kleinster Mikrosekunden-Anteil: %d\n", min_usec);
   }
@@ -58,6 +61,7 @@ int main(int argc, char **argv)
 
   printf("Rang %d beendet jetzt!\n", pid);
 
+  /* terminate processes */
   MPI_Finalize();
 
   return 0;
