@@ -31,41 +31,7 @@ circle (int* buf, int rank)
   return buf;
 }
 
-int
-main (int argc, char** argv)
-{
-  char arg[256];
-  int N;
-  int* buf;
-  int size;
-
-  int rank, num_procs;
-
-  if (argc < 2)
-  {
-    printf("Arguments error!\n");
-    return EXIT_FAILURE;
-  }
-
-  sscanf(argv[1], "%s", arg);
-
-  // Array length
-  N = atoi(arg);
-
-  //TODO check for input errors
-
-  // Todo: myrank
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-
-  // ´N / num_procs´ splits evenly; if rest exists -> spread until no rest (<=> for rank < rest)
-  size = (rank < N % num_procs) ? N / num_procs + 1 : N / num_procs;
-  buf = init(N, size, rank);
-
-  /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
-  MPI_Barrier(MPI_COMM_WORLD);
-
+void printArray(int *buf, int size, int rank, int num_procs, int N){
   int curr_size[1];
   int curr_buf[N / num_procs + 1];	//maybe last not used
   MPI_Status curr_status;
@@ -103,7 +69,44 @@ main (int argc, char** argv)
     printf ("rank %d: mem @%p\n", rank, (void*)&buf);
     MPI_Send(buf, size, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
   }
+}
 
+int
+main (int argc, char** argv)
+{
+  char arg[256];
+  int N;
+  int* buf;
+  int size;
+
+  int rank, num_procs;
+
+  if (argc < 2)
+  {
+    printf("Arguments error!\n");
+    return EXIT_FAILURE;
+  }
+
+  sscanf(argv[1], "%s", arg);
+
+  // Array length
+  N = atoi(arg);
+
+  //TODO check for input errors
+
+  // Todo: myrank
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+  // ´N / num_procs´ splits evenly; if rest exists -> spread until no rest (<=> for rank < rest)
+  size = (rank < N % num_procs) ? N / num_procs + 1 : N / num_procs;
+  buf = init(N, size, rank);
+
+  /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  printArray(buf, size, rank, num_procs, N);
   //DEBUG TODO
   /* wartet bis alle Ausgaben erfolgt sind */
   MPI_Barrier(MPI_COMM_WORLD);
