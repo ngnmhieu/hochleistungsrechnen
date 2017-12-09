@@ -93,7 +93,11 @@ main (int argc, char** argv)
   // Array length
   N = atoi(arg);
 
-  //TODO check for input errors
+  if (N <= 0)
+  {
+    printf("N must be positive!");
+    return EXIT_FAILURE;
+  }
 
   // Todo: myrank
   MPI_Init(&argc, &argv);
