@@ -6,7 +6,7 @@
 #define ROOT_PID 0
 
 int*
-init (int N, int size, int rank)
+init (int size, int rank)
 {
   // Todo
   int* buf = malloc(sizeof(int) * size);
@@ -46,7 +46,7 @@ void printArray(int *buf, int size, int rank, int num_procs, int N){
     for (int j = 1; j < num_procs; j++)
     {
       /* Get size first */
-      MPI_Recv(curr_size, 1, MPI_INT, j, 0, MPI_COMM_WORLD, &curr_status);
+      curr_size[0] = (j < N % num_procs) ? N / num_procs + 1 : N / num_procs;
       /* Now get buf */
       //int curr_buf = malloc(sizeof(int) * curr_size[0]);
       MPI_Recv(curr_buf, curr_size[0], MPI_INT, j, 0, MPI_COMM_WORLD, &curr_status);
@@ -57,16 +57,6 @@ void printArray(int *buf, int size, int rank, int num_procs, int N){
     }
   } else {
     // SLAVES
-    int size_buf[1];
-    size_buf[0] = size;
-    MPI_Send(size_buf, 1, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
-
-    for (int k = 0; k < size; k++)
-    {
-      printf ("inside rank %d: %d\n", rank, buf[k]);
-    }
-
-    printf ("rank %d: mem @%p\n", rank, (void*)&buf);
     MPI_Send(buf, size, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
   }
 }
@@ -101,7 +91,7 @@ main (int argc, char** argv)
 
   // ´N / num_procs´ splits evenly; if rest exists -> spread until no rest (<=> for rank < rest)
   size = (rank < N % num_procs) ? N / num_procs + 1 : N / num_procs;
-  buf = init(N, size, rank);
+  buf = init(size, rank);
 
   /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
   MPI_Barrier(MPI_COMM_WORLD);
