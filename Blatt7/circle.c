@@ -62,9 +62,6 @@ main (int argc, char** argv)
   buf = init(N, size);
 
   /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
-  printf ("rank %d: before barrier\n", rank);
-  MPI_Barrier(MPI_COMM_WORLD);
-  printf ("rank %d: after barrier\n", rank);
   MPI_Barrier(MPI_COMM_WORLD);
 
   int curr_size[1];
@@ -87,7 +84,7 @@ main (int argc, char** argv)
       MPI_Recv(curr_buf, curr_size[0], MPI_INT, j, 0, MPI_COMM_WORLD, &curr_status);
       for (int k = 0; k < curr_size[0]; k++)
       {
-        printf ("val rank %d: %d\n", j, curr_buf[k]);
+        printf ("rank %d: %d\n", j, curr_buf[k]);
       }
     }
   } else {
@@ -95,6 +92,13 @@ main (int argc, char** argv)
     int size_buf[1];
     size_buf[0] = size;
     MPI_Send(size_buf, 1, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
+
+    for (int k = 0; k < size; k++)
+    {
+      printf ("inside rank %d: %d\n", rank, buf[k]);
+    }
+
+    printf ("rank %d: mem @%p\n", rank, (void*)&buf);
     MPI_Send(buf, size, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
   }
 
