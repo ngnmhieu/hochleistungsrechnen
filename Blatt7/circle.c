@@ -6,12 +6,14 @@
 #define ROOT_PID 0
 
 int*
-init (int N, int size)
+init (int N, int size, int rank)
 {
   // Todo
   int* buf = malloc(sizeof(int) * size);
 
-  srand(time(NULL));
+  //srand(time(NULL));
+  srand(time(NULL)+rank+1);
+
 
   for (int i = 0; i < N; i++)
   {
@@ -59,7 +61,7 @@ main (int argc, char** argv)
 
   // ´N / num_procs´ splits evenly; if rest exists -> spread until no rest (<=> for rank < rest)
   size = (rank < N % num_procs) ? N / num_procs + 1 : N / num_procs;
-  buf = init(N, size);
+  buf = init(N, size, rank);
 
   /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
   MPI_Barrier(MPI_COMM_WORLD);
