@@ -4,10 +4,12 @@ In den restlichen Zeilen jeweils ein X in der zutreffenden Spalte setzen.
 Bearbeitungszeit:  
 Schwierigkeit:     [ ] zu leicht         [x] genau richtig     [ ] zu schwer
 Lehrreich:         [ ] wenig             [x] etwas             [ ] sehr
-Verständlichkeit:  [ ] großteils unklar  [ ] teilweise unklar  [x] verständlich
+Verständlichkeit:  [ ] großteils unklar  [x] teilweise unklar  [ ] verständlich
 
 Kommentar:
 Zeitaufwand zu groß? Wo sind Sie nicht weiter gekommen?
-Was war zu schwer oder unverständlich?
+Was war zu schwer oder unverständlich? Es wurde uns nicht wirklich klar, wie die Daten initialisiert werden sollten:
+	(1) Ein Array wird möglichst gleichmäßig aufgeteilt --> Vor MPI_Init initialisieren und von Master aufteilen lassen; ABER kein Prozess darf das ganze Array im Speicher halten --> Auch nicht der Master.
+	(2) Jeder Prozess initialisiert sein eigenes Array, sodass insgesamt N Einträge gehalten werden; ABER dann kann nicht wirklich von einem Array die Sprache sein
 Was könnten wir verbessern?
 Was hat Ihnen besonders gut gefallen?
