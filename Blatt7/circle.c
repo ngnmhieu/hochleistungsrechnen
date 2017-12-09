@@ -15,7 +15,7 @@ init (int N, int size, int rank)
   srand(time(NULL)+rank+1);
 
 
-  for (int i = 0; i < N; i++)
+  for (int i = 0; i < size; i++)
   {
     // Do not modify % 25
     buf[i] = rand() % 25;
