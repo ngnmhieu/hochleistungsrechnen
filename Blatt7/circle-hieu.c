@@ -22,75 +22,12 @@ init (int size, int rank)
   // Todo
   int* buf = malloc(sizeof(int) * size);
 
-  //srand(time(NULL));
   srand(time(NULL)+rank+1);
-
 
   for (int i = 0; i < size; i++)
   {
     // Do not modify % 25
     buf[i] = rand() % 25;
-  }
-
-  return buf;
-}
-
-/**
- * Gibt den Nachfolger zurueck
- * 0 wird zurueck gegeben falls rank == num_proc - 1
- */
-int getNextRank(int rank, int num_proc) {
-  return (rank + 1) % num_proc;
-}
-
-int getPrevRank(int rank, int num_proc) {
-  return (rank == 0) ? num_proc - 1 : rank - 1;
-}
-
-int* circle (int* buf, int rank, int num_procs, int N)
-{
-  int firstVal;
-
-  // den Wert fuer die Abbruchbedingung von P_0 -> P_N-1 senden
-  if (rank == 0) {
-    MPI_Send(buf, 1, MPI_INT, num_procs - 1, 0, MPI_COMM_WORLD); 
-  }
-  if (rank == num_procs - 1) {
-    MPI_Recv(&firstVal, 1, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  int running = 1;
-  int nextRank, prevRank, bufSize, prevBufSize;
-  for (int i = 0; running && i < 10; i++) {
-
-    // Daten an Nachfolger verschicken
-    nextRank = getNextRank(rank, num_procs);
-    bufSize = getSize(N, num_procs, rank, i);
-    printf("[PID = %d] Sending %d ints to process %d.\n", rank, bufSize, nextRank); 
-    MPI_Send(buf, bufSize, MPI_INT, nextRank, 0, MPI_COMM_WORLD); 
-
-    // Daten aus Vorgaenger empfangen
-    prevRank = getPrevRank(rank, num_procs);
-    prevBufSize = getSize(N, num_procs, prevRank, i);
-    int* tempBuf = buf; // save pointer to buf
-    int* buf = (int*) malloc(sizeof(int) * prevBufSize);
-    printf("[PID = %d] Receiving data from process %d.\n", prevBufSize, prevRank); 
-    MPI_Recv(buf, prevBufSize, MPI_INT, prevRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    free(tempBuf);
-
-    if (rank == num_procs - 1) {
-      if (buf[0] == firstVal){
-        running = 0;
-      }
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    MPI_Bcast(&running, 1, MPI_INT,num_procs-1, MPI_COMM_WORLD);
-
-    MPI_Barrier(MPI_COMM_WORLD);
   }
 
   return buf;
@@ -124,6 +61,77 @@ void printArray(int *buf, int size, int rank, int num_procs, int N, int itterati
     // SLAVES
     MPI_Send(buf, size, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD);
   }
+}
+
+
+/**
+ * Gibt den Nachfolger zurueck
+ * 0 wird zurueck gegeben falls rank == num_proc - 1
+ */
+int getNextRank(int rank, int num_proc) {
+  return (rank + 1) % num_proc;
+}
+
+int getPrevRank(int rank, int num_proc) {
+  return (rank == 0) ? num_proc - 1 : rank - 1;
+}
+
+int* circle (int* buf, int rank, int num_procs, int N)
+{
+  int firstVal;
+
+  // den Wert fuer die Abbruchbedingung von P_0 -> P_N-1 senden
+  if (rank == 0) {
+    MPI_Send(buf, 1, MPI_INT, num_procs - 1, 0, MPI_COMM_WORLD); 
+  }
+  if (rank == num_procs - 1) {
+    MPI_Recv(&firstVal, 1, MPI_INT, ROOT_PID, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  int running = 1;
+  int nextRank, prevRank, bufSize, prevBufSize;
+  for (int i = 0; running && i < 2; i++) {
+
+    // DEBUG
+    if (rank == 0) {
+      printf("===== Iteration %d ====\n", i);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Daten an Nachfolger verschicken
+    nextRank = getNextRank(rank, num_procs);
+    bufSize = getSize(N, num_procs, rank, i);
+    printf("[PID = %d] Sending %d ints to process %d.\n", rank, bufSize, nextRank); 
+    MPI_Send(buf, bufSize, MPI_INT, nextRank, 0, MPI_COMM_WORLD); 
+
+    // Daten aus Vorgaenger empfangen
+    prevRank = getPrevRank(rank, num_procs);
+    prevBufSize = getSize(N, num_procs, prevRank, i);
+    int* tempBuf = buf; // save pointer to buf
+    int* buf = (int*) malloc(sizeof(int) * prevBufSize);
+    printf("[PID = %d] Receiving %d ints from process %d.\n", rank, prevBufSize, prevRank); 
+    MPI_Recv(buf, prevBufSize, MPI_INT, prevRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    free(tempBuf);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // DEBUG
+    printArray(buf, prevBufSize, rank, num_procs, N, 0);
+
+    if (rank == num_procs - 1) {
+      if (buf[0] == firstVal){
+        running = 0;
+      }
+    }
+
+    MPI_Bcast(&running, 1, MPI_INT,num_procs-1, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+
+  return buf;
 }
 
 int
@@ -162,11 +170,13 @@ main (int argc, char** argv)
   size = getSize(N, num_procs, rank, 0);
   buf = init(size, rank);
 
-  /* if (rank == ROOT_PID) */
-  /* { */
-  /*   printf("\nBEFORE\n"); */
-  /* } */
-  /* printArray(buf, size, rank, num_procs, N, 0); */
+  if (rank == ROOT_PID) {
+    printf("\nBEFORE\n");
+  }
+  printArray(buf, size, rank, num_procs, N, 0);
+
+  // DEBUG
+  MPI_Barrier(MPI_COMM_WORLD);
 
   circle(buf, rank, num_procs, N);
 
