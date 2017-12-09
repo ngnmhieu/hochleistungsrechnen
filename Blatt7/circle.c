@@ -112,14 +112,14 @@ int* circle (int* buf, int rank, int num_procs, int N)
     prevBufSize = getSize(N, num_procs, prevRank, i);
     int* tempBuf = buf; // save pointer to buf
     buf = (int*) malloc(sizeof(int) * prevBufSize);
-    printf("[PID = %d] Receiving %d ints from process %d.\n", rank, prevBufSize, prevRank); 
     MPI_Recv(buf, prevBufSize, MPI_INT, prevRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    printf("[PID = %d] Receiving %d ints from process %d.\n", rank, prevBufSize, prevRank); 
     free(tempBuf);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     // DEBUG
-    printArray(buf, prevBufSize, rank, num_procs, N, 0);
+    printArray(buf, prevBufSize, rank, num_procs, N, i);
     // END DEBUG
 
     if (rank == num_procs - 1) {
@@ -128,7 +128,7 @@ int* circle (int* buf, int rank, int num_procs, int N)
       }
     }
 
-    MPI_Bcast(&running, 1, MPI_INT,num_procs-1, MPI_COMM_WORLD);
+    MPI_Bcast(&running, 1, MPI_INT, num_procs-1, MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -172,20 +172,15 @@ main (int argc, char** argv)
   size = getSize(N, num_procs, rank, 0);
   buf = init(size, rank);
 
+  // DEBUG
   if (rank == ROOT_PID) {
     printf("\nBEFORE\n");
   }
   printArray(buf, size, rank, num_procs, N, 0);
   MPI_Barrier(MPI_COMM_WORLD);
+  // END DEBUG
 
   circle(buf, rank, num_procs, N);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (rank == ROOT_PID) {
-    printf("\nAFTER\n");
-  }
-  printArray(buf, size, rank, num_procs, N, 1);
-
 
   /* wartet bis alle Ausgaben erfolgt sind */
   MPI_Barrier(MPI_COMM_WORLD);
