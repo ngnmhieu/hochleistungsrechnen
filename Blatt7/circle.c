@@ -35,9 +35,9 @@ void printArray(int *buf, int size, int rank, int num_procs, int N){
   int curr_size[1];
   int curr_buf[N / num_procs + 1];	//maybe last not used
   MPI_Status curr_status;
+  /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
   if (rank == ROOT_PID)
   {
-    printf("\nBEFORE\n");
     // MASTER
     for (int i = 0; i < size; i++)
     {
@@ -93,26 +93,26 @@ main (int argc, char** argv)
   size = (rank < N % num_procs) ? N / num_procs + 1 : N / num_procs;
   buf = init(size, rank);
 
-  /* NOT ALLOWED to receive all bufs and print -> collect one at a time and print*/
-  MPI_Barrier(MPI_COMM_WORLD);
-
+  if (rank == ROOT_PID)
+  {
+    printf("\nBEFORE\n");
+  }
   printArray(buf, size, rank, num_procs, N);
-  //DEBUG TODO
+
+  //circle(buf, rank);
+
+  if (rank == ROOT_PID)
+  {
+    printf("\nAFTER\n");
+  }
+  printArray(buf, size, rank, num_procs, N);
+
+
   /* wartet bis alle Ausgaben erfolgt sind */
   MPI_Barrier(MPI_COMM_WORLD);
   printf("Rang %d beendet jetzt!\n", rank);
+
   /* terminate processes */
   MPI_Finalize();
-  return EXIT_SUCCESS;
-
-  circle(buf, rank);
-
-  printf("\nAFTER\n");
-
-  for (int j = 0; j < N; j++)
-  {
-    printf ("rank %d: %d\n", rank, buf[j]);
-  }
-
   return EXIT_SUCCESS;
 }
