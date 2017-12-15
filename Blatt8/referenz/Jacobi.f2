@@ -1,7 +1,15 @@
+============================================================
+Program for calculation of partial differential equations.  
+============================================================
+(c) Dr. Thomas Ludwig, TU München.
+    Thomas A. Zochler, TU München.
+    Andreas C. Schmidt, TU München.
+============================================================
+
 Berechnungszeit:    0.000000 s
 Berechnungsmethode: Jacobi
 Interlines:         0
-Stoerfunktion:      f(x,y)=2pi^2*sin(pi*x)sin(pi*y)
+Stoerfunktion:      f(x,y) = 2pi^2*sin(pi*x)sin(pi*y)
 Terminierung:       Anzahl der Iterationen
 Anzahl Iterationen: 85
 Norm des Fehlers:   9.971921e-05

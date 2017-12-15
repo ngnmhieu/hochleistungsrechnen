@@ -24,3 +24,5 @@ vampir:
 clean:
 	rm -f partdiff-par *.z *.thumb *.o *.otf
 
+test:
+	./test.sh

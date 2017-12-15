@@ -1,7 +1,15 @@
+============================================================
+Program for calculation of partial differential equations.  
+============================================================
+(c) Dr. Thomas Ludwig, TU München.
+    Thomas A. Zochler, TU München.
+    Andreas C. Schmidt, TU München.
+============================================================
+
 Berechnungszeit:    0.000000 s
 Berechnungsmethode: Jacobi
 Interlines:         0
-Stoerfunktion:      f(x,y)=0
+Stoerfunktion:      f(x,y) = 0
 Terminierung:       Anzahl der Iterationen
 Anzahl Iterationen: 82
 Norm des Fehlers:   9.469747e-05
