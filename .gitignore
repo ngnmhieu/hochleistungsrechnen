@@ -1,6 +1,7 @@
 *.gian
 *.swp
 *.swo
+*.idea
 .DS_Store
 test-posix.txt
 test-seq.txt
