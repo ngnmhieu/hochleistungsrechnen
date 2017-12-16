@@ -36,6 +36,7 @@ int g_num_procs;		/* number of processes working */
 int g_minMat;				/* lower index for matrix-section */
 int g_maxMat;				/* upper index for matrix-section */
 int g_size;				 /* number of matrix rows */
+uint64_t g_alloc_size;
 
 struct calculation_arguments
 {
@@ -146,10 +147,14 @@ setLowAndHigh(int num_rows) {
   // if bigger: minIndex + bigSie; else: minIndex + smallSize
   g_size   = (g_rank < num_big) ? base_size + 1 : base_size;
   g_maxMat = g_minMat + g_size - 1;
-
-  // shift g_minMat and g_maxMat by one 
-  g_minMat++;
-  g_maxMat++;
+  
+  // extra rows for data from other processes
+  // for the first and last rank only one extra row
+  if (g_rank == 0 || g_rank == g_num_procs - 1) {
+    g_alloc_size = g_size + 1; 
+  } else {
+    g_alloc_size = g_size + 2;
+  }
   printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size);
 }
 
@@ -166,22 +171,19 @@ allocateMatrices (struct calculation_arguments* arguments)
 	uint64_t const N = arguments->N;
 
   // set the appropriate g_minMat and g_maxMat
-	setLowAndHigh(N-1);
+	setLowAndHigh(N);
 
-  if (g_size > 0) {
-    uint64_t alloc_size = g_size + 2; // two extra rows for data from other processes
-    printf("[Rank = %d] Allocating %d rows of memory.\n", g_rank, alloc_size);
-    arguments->M = allocateMemory(arguments->num_matrices * alloc_size * (N + 1) * sizeof(double));
-    arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
+  printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size);
+  arguments->M = allocateMemory(arguments->num_matrices * g_alloc_size * (N + 1) * sizeof(double));
+  arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
 
-    for (i = 0; i < arguments->num_matrices; i++)
+  for (i = 0; i < arguments->num_matrices; i++)
+  {
+    arguments->Matrix[i] = allocateMemory(g_alloc_size * sizeof(double*));
+
+    for (j = 0; j < g_alloc_size; j++)
     {
-      arguments->Matrix[i] = allocateMemory(alloc_size * sizeof(double*));
-
-      for (j = 0; j < alloc_size; j++)
-      {
-        arguments->Matrix[i][j] = arguments->M + (i * alloc_size * (N + 1)) + (j * (N + 1));
-      }
+      arguments->Matrix[i][j] = arguments->M + (i * g_alloc_size * (N + 1)) + (j * (N + 1));
     }
   }
 }
@@ -202,7 +204,7 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	/* initialize matrix/matrices with zeros */
 	for (g = 0; g < arguments->num_matrices; g++)
 	{
-		for (i = 0; i <= N; i++)
+		for (i = 0; i < g_alloc_size; i++)
 		{
 			for (j = 0; j <= N; j++)
 			{
@@ -449,6 +451,7 @@ main (int argc, char** argv)
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
+  return 0;
 
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
