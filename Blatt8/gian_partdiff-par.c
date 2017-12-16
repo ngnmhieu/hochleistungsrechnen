@@ -298,7 +298,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 		if (g_num_procs > 1)
 		{
 			// MSGs between processes
-			MPI_reqeust send_to_next, send_to_prev, get_from_next, get_from_prev;
+			MPI_Request send_to_next, send_to_prev, get_from_next, get_from_prev;
 			// Send first to prev
 			if (g_rank > 0){
 				// Index 1 because 0 is buffer (dont send)
@@ -307,7 +307,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 			// Send last to next
 			if (g_rank < g_num_procs - 1){
 				// Index g_alloc_size - 2 because last is buffer (dont send)
-				MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank + 1, 0, MPI_COMM_WORLD, &send_to_next)
+				MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank + 1, 0, MPI_COMM_WORLD, &send_to_next);
 			}
 			// Get first from next
 			if (g_rank < g_num_procs - 1){
