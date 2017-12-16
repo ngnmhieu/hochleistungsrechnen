@@ -387,7 +387,7 @@ main (int argc, char** argv)
 	// MPI INIT
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	if (options->method == METH_JACOBI){
+	if (options.method == METH_JACOBI){
 		MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	} else {
 		// run METH_GAUSS_SEIDEL sequential
