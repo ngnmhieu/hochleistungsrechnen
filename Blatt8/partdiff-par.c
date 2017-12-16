@@ -30,30 +30,28 @@
 #include <mpi.h>
 #include "partdiff-par.h"
 
-struct mpi_related_values
-{
-	int rank;				/* process rank */
-	int num_procs;			/* number of processes working */
-	int minMat;				/* lower index for matrix-section */
-	int maxMat;				/* upper index for matrix-section */
-};
 
-struct mpi_related_values mpi_related;	// Have global for each process
+int g_rank;					/* process rank */
+int g_num_procs;		/* number of processes working */
+int g_minMat;				/* lower index for matrix-section */
+int g_maxMat;				/* upper index for matrix-section */
+int g_size;				 /* number of matrix rows */
+uint64_t g_alloc_size;
 
 struct calculation_arguments
 {
-	uint64_t  N;              /* number of spaces between lines (lines=N+1)     */
-	uint64_t  num_matrices;   /* number of matrices                             */
-	double    h;              /* length of a space between two lines            */
-	double    ***Matrix;      /* index matrix used for addressing M             */
-	double    *M;             /* two matrices with real values                  */
+  uint64_t  N;              /* number of spaces between lines (lines=N+1)     */
+  uint64_t  num_matrices;   /* number of matrices                             */
+  double    h;              /* length of a space between two lines            */
+  double    ***Matrix;      /* index matrix used for addressing M             */
+  double    *M;             /* two matrices with real values                  */
 };
 
 struct calculation_results
 {
-	uint64_t  m;
-	uint64_t  stat_iteration; /* number of current iteration                    */
-	double    stat_precision; /* actual precision of all slaves in iteration    */
+  uint64_t  m;
+  uint64_t  stat_iteration; /* number of current iteration                    */
+  double    stat_precision; /* actual precision of all slaves in iteration    */
 };
 
 /* ************************************************************************ */
@@ -69,34 +67,34 @@ struct timeval comp_time;        /* time when calculation completed             
 /* initVariables: Initializes some global variables                         */
 /* ************************************************************************ */
 static
-void
+  void
 initVariables (struct calculation_arguments* arguments, struct calculation_results* results, struct options const* options)
 {
-	arguments->N = (options->interlines * 8) + 9 - 1;
-	arguments->num_matrices = (options->method == METH_JACOBI) ? 2 : 1;
-	arguments->h = 1.0 / arguments->N;
+  arguments->N = (options->interlines * 8) + 9 - 1;
+  arguments->num_matrices = (options->method == METH_JACOBI) ? 2 : 1;
+  arguments->h = 1.0 / arguments->N;
 
-	results->m = 0;
-	results->stat_iteration = 0;
-	results->stat_precision = 0;
+  results->m = 0;
+  results->stat_iteration = 0;
+  results->stat_precision = 0;
 }
 
 /* ************************************************************************ */
 /* freeMatrices: frees memory for matrices                                  */
 /* ************************************************************************ */
 static
-void
+  void
 freeMatrices (struct calculation_arguments* arguments)
 {
-	uint64_t i;
+  uint64_t i;
 
-	for (i = 0; i < arguments->num_matrices; i++)
-	{
-		free(arguments->Matrix[i]);
-	}
+  for (i = 0; i < arguments->num_matrices; i++)
+  {
+    free(arguments->Matrix[i]);
+  }
 
-	free(arguments->Matrix);
-	free(arguments->M);
+  free(arguments->Matrix);
+  free(arguments->M);
 }
 
 /* ************************************************************************ */
@@ -104,26 +102,60 @@ freeMatrices (struct calculation_arguments* arguments)
 /* allocates memory and quits if there was a memory allocation problem      */
 /* ************************************************************************ */
 static
-void*
+  void*
 allocateMemory (size_t size)
 {
-	void *p;
+  void *p;
 
-	if ((p = malloc(size)) == NULL)
-	{
-		printf("Speicherprobleme! (%" PRIu64 " Bytes angefordert)\n", size);
-		exit(1);
-	}
+  if ((p = malloc(size)) == NULL)
+  {
+    printf("Speicherprobleme! (%" PRIu64 " Bytes angefordert)\n", size);
+    exit(1);
+  }
 
-	return p;
+  return p;
 }
 
+
+/* ************************************************************************ */
+/* setLowAndHigh: sets Bounds of Sub-Matrix for the calling process         */
+/* ************************************************************************ */
 static
 void
-setLowAndHigh(int matSize){
-	// TODO
-	// mpi_related.minMat = 0;
-	// mpi_related.maxMat = 0;
+setLowAndHigh(int num_rows) {
+
+  // Split all rows equally [base_size]
+  int base_size = num_rows / g_num_procs;
+  // and give rest to first n <= rest
+  int num_big = num_rows % g_num_procs;
+  /*
+   * number of processes that receive one row more = rest => (0 --> rest - 1) => rank < num_big
+   * calculate number of processes that receive one more, prior to current process
+   * eg: num_big = 4 & rank = 3 ==> rank 0, 1, 2 have one more also --> #rank prior to this one
+   * eg: num_big = 4 & rank = 4 ==> rank 0, 1, 2, 3 have one more --> num_big prior to this one
+   */
+  int num_big_pres = (g_rank < num_big) ? g_rank : num_big;
+  /*
+   * number of processes that do not receive one more, prior to current process
+   * max(rank - num_big_pres, 0)
+   * eg: num_big = 4 & rank = 3 ==> 3 bigger prior => 3 - 3 = 0; no small prior
+   * eg: num_big = 4 & rank = 5 ==> 4 bigger prior (0,1,2,3) => 5 - 4 = 1; 1 smaller prior (4)
+   */
+  int num_sml_pres = (g_rank - num_big_pres > 0) ? g_rank - num_big_pres : 0;
+  // number of bigger prior to this * bigger-size + number of smaller prior * base-size
+  g_minMat = (num_big_pres * (base_size + 1)) + num_sml_pres * base_size;
+  // if bigger: minIndex + bigSie; else: minIndex + smallSize
+  g_size   = (g_rank < num_big) ? base_size + 1 : base_size;
+  g_maxMat = g_minMat + g_size - 1;
+  
+  // extra rows for data from other processes
+  // for the first and last rank only one extra row
+  if (g_rank == 0 || g_rank == g_num_procs - 1) {
+    g_alloc_size = g_size + 1; 
+  } else {
+    g_alloc_size = g_size + 2;
+  }
+  printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size);
 }
 
 
@@ -138,20 +170,22 @@ allocateMatrices (struct calculation_arguments* arguments)
 
 	uint64_t const N = arguments->N;
 
-	arguments->M = allocateMemory(arguments->num_matrices * (N + 1) * (N + 1) * sizeof(double));
-	arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
-
+  // set the appropriate g_minMat and g_maxMat
 	setLowAndHigh(N);
-	// Based on minMat and maxMat TODO
-	for (i = 0; i < arguments->num_matrices; i++)
-	{
-		arguments->Matrix[i] = allocateMemory((N + 1) * sizeof(double*));
 
-		for (j = 0; j <= N; j++)
-		{
-			arguments->Matrix[i][j] = arguments->M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
-		}
-	}
+  printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size);
+  arguments->M = allocateMemory(arguments->num_matrices * g_alloc_size * (N + 1) * sizeof(double));
+  arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
+
+  for (i = 0; i < arguments->num_matrices; i++)
+  {
+    arguments->Matrix[i] = allocateMemory(g_alloc_size * sizeof(double*));
+
+    for (j = 0; j < g_alloc_size; j++)
+    {
+      arguments->Matrix[i][j] = arguments->M + (i * g_alloc_size * (N + 1)) + (j * (N + 1));
+    }
+  }
 }
 
 /* ************************************************************************ */
@@ -161,41 +195,60 @@ static
 void
 initMatrices (struct calculation_arguments* arguments, struct options const* options)
 {
-	uint64_t g, i, j;                                /*  local variables for loops   */
+  uint64_t g, i, j;                                /*  local variables for loops   */
 
-	uint64_t const N = arguments->N;
-	double const h = arguments->h;
-	double*** Matrix = arguments->Matrix;
+  uint64_t const N = arguments->N;
+  double const h = arguments->h;
+  double*** Matrix = arguments->Matrix;
 
-	/* initialize matrix/matrices with zeros */
-	for (g = 0; g < arguments->num_matrices; g++)
-	{
-		for (i = 0; i <= N; i++)
-		{
-			for (j = 0; j <= N; j++)
-			{
-				Matrix[g][i][j] = 0.0;
-			}
-		}
-	}
+  /* initialize matrix/matrices with zeros */
+  for (g = 0; g < arguments->num_matrices; g++)
+  {
+    for (i = 0; i < g_alloc_size; i++)
+    {
+      for (j = 0; j <= N; j++)
+      {
+        Matrix[g][i][j] = 0.0;
+      }
+    }
+  }
 
-	/* initialize borders, depending on function (function 2: nothing to do) */
-	if (options->inf_func == FUNC_F0)
-	{
-		for (g = 0; g < arguments->num_matrices; g++)
-		{
-			for (i = 0; i <= N; i++)
-			{
-				Matrix[g][i][0] = 1.0 - (h * i);
-				Matrix[g][i][N] = h * i;
-				Matrix[g][0][i] = 1.0 - (h * i);
-				Matrix[g][N][i] = h * i;
-			}
+  /* initialize borders, depending on function (function 2: nothing to do) */
+  if (options->inf_func == FUNC_F0)
+  {
+    for (g = 0; g < arguments->num_matrices; g++)
+    {
+      if (g_rank == 0){
 
-			Matrix[g][N][0] = 0.0;
-			Matrix[g][0][N] = 0.0;
-		}
-	}
+        for (i = 0; i <= N; i++)
+        {
+          Matrix[g][0][i] = 1.0 - (h * i);
+        }
+
+      } else if (g_rank == g_num_procs - 1) {
+
+        for (i = 0; i <= N; i++)
+        {
+          Matrix[g][g_alloc_size-1][i] = h * i;
+        }
+      } 
+      
+      // for every process
+      for (i = 0; i < g_alloc_size; i++)
+      {
+        j = g_minMat + i;
+        Matrix[g][i][0] = 1.0 - (h * j);
+        Matrix[g][i][N] = h * j;
+      }
+
+      if (g_rank == 0) {
+        Matrix[g][0][N] = 0.0;
+      } else if (g_rank == g_num_procs - 1) {
+        Matrix[g][g_alloc_size-1][0] = 0.0;
+      }
+
+    }
+  }
 }
 
 /* ************************************************************************ */
@@ -244,8 +297,41 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 
 		maxresiduum = 0;
 
+    MPI_Request sdown, sup, rdown, rup;
+
+    // Senden der hintersten Reihe an den naechsten Rang
+    if (g_rank < g_num_procs-1) {
+      MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
+    }
+    // Senden der vordersten Reihe an den vorherigen Rang
+    if (g_rank > 0) {
+      MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
+    }
+
+    // Empfangen der letzten Reihe des vorherigen Prozesses
+    if (g_rank > 0) {
+      MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
+    }
+    // Empfangen der ersten Reihe des naechsten Prozesses
+    if (g_rank < g_num_procs-1) {
+      MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
+    }
+
+    // Warten
+    if (g_rank < g_num_procs-1) {
+      MPI_Wait(&sdown, MPI_STATUS_IGNORE);
+      MPI_Wait(&rup, MPI_STATUS_IGNORE);
+    }
+
+    if (g_rank > 0) {
+      MPI_Wait(&sup, MPI_STATUS_IGNORE);
+      MPI_Wait(&rdown, MPI_STATUS_IGNORE);
+    }
+
+    printf("[Rank = %d] Finish sending and receiving\n", g_rank);
+
 		/* over all rows */
-		for (i = 1; i < N; i++)
+		for (i = 1; i < g_alloc_size-1; i++)
 		{
 			double fpisin_i = 0.0;
 
@@ -283,8 +369,17 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 		m1 = m2;
 		m2 = i;
 
-		/* check for stopping calculation depending on termination method */
-		if (options->termination == TERM_PREC)
+    int residuums[g_num_procs];
+    // Empfangen und Senden aller Residuum
+    MPI_Allgather(&residuum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+    // Ermitteln des global hoechsten Residuums
+    for (i=0; i<g_num_procs; i++) {
+      maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i];
+    }
+
+
+    /* check for stopping calculation depending on termination method */
+    if (options->termination == TERM_PREC)
 		{
 			if (maxresiduum < options->term_precision)
 			{
@@ -353,6 +448,85 @@ displayStatistics (struct calculation_arguments const* arguments, struct calcula
 	printf("Norm des Fehlers:   %e\n", results->stat_precision);
 	printf("\n");
 }
+/**
+ * rank and size are the MPI rank and size, respectively.
+ * from and to denote the global(!) range of lines that this process is responsible for.
+ *
+ * Example with 9 matrix lines and 4 processes:
+ * - rank 0 is responsible for 1-2, rank 1 for 3-4, rank 2 for 5-6 and rank 3 for 7.
+ *   Lines 0 and 8 are not included because they are not calculated.
+ * - Each process stores two halo lines in its matrix (except for ranks 0 and 3 that only store one).
+ * - For instance: Rank 2 has four lines 0-3 but only calculates 1-2 because 0 and 3 are halo lines for other processes. It is responsible for (global) lines 5-6.
+ */
+static
+void
+DisplayMatrix_mpi (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options, int rank, int size, int from, int to)
+{
+  int const elements = 8 * options->interlines + 9;
+
+  int x, y;
+  double** Matrix = arguments->Matrix[results->m];
+  MPI_Status status;
+
+  /* first line belongs to rank 0 */
+  if (rank == 0)
+    from--;
+
+  /* last line belongs to rank size - 1 */
+  if (rank + 1 == size)
+    to++;
+
+  if (rank == 0)
+    printf("Matrix:\n");
+
+  for (y = 0; y < 9; y++)
+  {
+    int line = y * (options->interlines + 1);
+
+    if (rank == 0)
+    {
+      /* check whether this line belongs to rank 0 */
+      if (line < from || line > to)
+      {
+        /* use the tag to receive the lines in the correct order
+         * the line is stored in Matrix[0], because we do not need it anymore */
+        MPI_Recv(Matrix[0], elements, MPI_DOUBLE, MPI_ANY_SOURCE, 42 + y, MPI_COMM_WORLD, &status);
+      }
+    }
+    else
+    {
+      if (line >= from && line <= to)
+      {
+        /* if the line belongs to this process, send it to rank 0
+         * (line - from + 1) is used to calculate the correct local address */
+        MPI_Send(Matrix[line - from + 1], elements, MPI_DOUBLE, 0, 42 + y, MPI_COMM_WORLD);
+      }
+    }
+
+    if (rank == 0)
+    {
+      for (x = 0; x < 9; x++)
+      {
+        int col = x * (options->interlines + 1);
+
+        if (line >= from && line <= to)
+        {
+          /* this line belongs to rank 0 */
+          printf("%7.4f", Matrix[line][col]);
+        }
+        else
+        {
+          /* this line belongs to another rank and was received above */
+          printf("%7.4f", Matrix[0][col]);
+        }
+      }
+
+      printf("\n");
+    }
+  }
+
+  fflush(stdout);
+}
 
 /****************************************************************************/
 /** Beschreibung der Funktion DisplayMatrix:                               **/
@@ -405,34 +579,31 @@ main (int argc, char** argv)
 
 	// MPI INIT
 	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_rank(MPI_COMM_WORLD, &g_rank);
 	if (options.method == METH_JACOBI){
-		MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+		MPI_Comm_size(MPI_COMM_WORLD, &g_num_procs);
 	} else {
 		// run METH_GAUSS_SEIDEL sequential
-		num_procs = 1;
-		MPI_Comm_rank(MPI_COMM_WORLD, &mpi_related.rank);
-		if (options->method == METH_JACOBI){
-			MPI_Comm_size(MPI_COMM_WORLD, &mpi_related.num_procs);
-		} else {
-			// run METH_GAUSS_SEIDEL sequential
-			mpi_related.num_procs = 1;
-			// OR:
-			// return -1;
-		}
-
-		allocateMatrices(&arguments);
-		initMatrices(&arguments, &options);
-
-		gettimeofday(&start_time, NULL);
-		calculate(&arguments, &results, &options);
-		gettimeofday(&comp_time, NULL);
-
-		displayStatistics(&arguments, &results, &options);
-		DisplayMatrix(&arguments, &results, &options);
-
-		freeMatrices(&arguments);
-
-		return 0;
+		g_num_procs = 1;
+		// OR:
+		// return -1;
 	}
+
+	allocateMatrices(&arguments);
+	initMatrices(&arguments, &options);
+
+	gettimeofday(&start_time, NULL);
+	calculate(&arguments, &results, &options);
+	gettimeofday(&comp_time, NULL);
+
+  if (g_rank == 0) {
+    displayStatistics(&arguments, &results, &options);
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+	DisplayMatrix_mpi(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
+
+	freeMatrices(&arguments);
+
+	return 0;
 }
+
