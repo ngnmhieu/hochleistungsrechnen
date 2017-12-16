@@ -35,7 +35,8 @@ int g_rank;					/* process rank */
 int g_num_procs;			/* number of processes working */
 int g_minMat;				/* lower index for matrix-section */
 int g_maxMat;				/* upper index for matrix-section */
-//int subMatSize;			/* number of rows in the sub-matrix of the process */
+int g_subMatSize;			/* number of rows in the sub-matrix of the process */
+uint64_t g_alloc_size;      /* number of allocated rows g_subMatSize + 1 for rank=0 and rank=num_procs-1; +2 else*/
 
 struct calculation_arguments
 {
@@ -117,11 +118,11 @@ allocateMemory (size_t size)
 
 
 /* ************************************************************************ */
-/* setLowAndHigh: sets Bounds of Sub-Matrix for the calling process         */
+/* setMatIndex: sets Bounds of Sub-Matrix for the calling process           */
 /* ************************************************************************ */
 static
 void
-setLowAndHigh(int num_rows){
+partitionMatrix(int num_rows){
 
     // Split all rows equally [base_size]
     int base_size = num_rows / g_num_procs;
@@ -144,9 +145,18 @@ setLowAndHigh(int num_rows){
     // number of bigger prior to this * bigger-size + number of smaller prior * base-size
     int g_minMat = (num_big_pres * (base_size + 1)) + num_sml_pres * base_size;
     // if bigger: minIndex + bigSie; else: minIndex + smallSize
-    int my_size = (g_rank < num_big) ? base_size + 1 : base_size;
-    int g_maxMat = g_minMat + my_size - 1;
+    int g_subMatSize = (g_rank < num_big) ? base_size + 1 : base_size;
+    int g_maxMat = g_minMat + g_subMatSize - 1;
 
+    printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size);
+    // if g_num_procs > num_rows --> g_subMatSize = 0 for g_rank < num_big (<== base_size = 0)
+    //if(g_subMatSize){
+    //    g_minMat = NULL;
+    //    g_maxMat = NULL;
+    //}
+
+    // store row below (rank = 0) / above&below (0 < rank < num_proc - 1) / above (rank = num_proc - 1) also
+    g_alloc_size = (g_rank == 0 || g_rank == g_num_procs - 1) ? g_subMatSize + 1 : g_subMatSize + 2;
 }
 
 
@@ -161,20 +171,24 @@ allocateMatrices (struct calculation_arguments* arguments)
 
 	uint64_t const N = arguments->N;
 
-	setLowAndHigh(N);
-	// Based on minMat and maxMat TODO
+    // Split the matrix over the processes
+    partitionMatrix(N + 1);
 
-	arguments->M = allocateMemory(arguments->num_matrices * (N + 1) * (N + 1) * sizeof(double));
-	arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
+    if(g_subMatSize > 0){
 
-	for (i = 0; i < arguments->num_matrices; i++)
-	{
-		arguments->Matrix[i] = allocateMemory((N + 1) * sizeof(double*));
+        printf("[Rank = %d] Allocating %d rows of memory.\n", g_rank, g_alloc_size);
 
-		for (j = 0; j <= N; j++)
-		{
-			arguments->Matrix[i][j] = arguments->M + (i * (N + 1) * (N + 1)) + (j * (N + 1));
-		}
+	    arguments->M = allocateMemory(arguments->num_matrices * (g_subMatSize) * (N + 1) * sizeof(double));
+	    arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
+
+	    for (i = 0; i < arguments->num_matrices; i++) {
+            arguments->Matrix[i] = allocateMemory((g_alloc_size) * sizeof(double *));
+
+            for (j = 0; j < g_alloc_size; j++) {
+                arguments->Matrix[i][j] = arguments->M + (i * (g_subMatSize) * (N + 1)) + (j * (N + 1));
+            }
+        }
+
 	}
 }
 
@@ -187,16 +201,16 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 {
 	uint64_t g, i, j;                                /*  local variables for loops   */
 
-	uint64_t const N = arguments->N;
+	//uint64_t const N = arguments->N;
 	double const h = arguments->h;
 	double*** Matrix = arguments->Matrix;
 
 	/* initialize matrix/matrices with zeros */
 	for (g = 0; g < arguments->num_matrices; g++)
 	{
-		for (i = 0; i <= N; i++)
+		for (i = 0; i < g_alloc_size; i++)          // allocated rows + overlap (in [1,2])
 		{
-			for (j = 0; j <= N; j++)
+			for (j = 0; j <= N; j++)                // columns
 			{
 				Matrix[g][i][j] = 0.0;
 			}
@@ -208,15 +222,15 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 	{
 		for (g = 0; g < arguments->num_matrices; g++)
 		{
-			for (i = 0; i <= N; i++)
+			for (i = 0; i < g_alloc_size; i++)
 			{
 				Matrix[g][i][0] = 1.0 - (h * i);
 				Matrix[g][i][N] = h * i;
 				Matrix[g][0][i] = 1.0 - (h * i);
-				Matrix[g][N][i] = h * i;
+				Matrix[g][g_alloc_size][i] = h * i;
 			}
 
-			Matrix[g][N][0] = 0.0;
+			Matrix[g][g_alloc_size][0] = 0.0;
 			Matrix[g][0][N] = 0.0;
 		}
 	}
