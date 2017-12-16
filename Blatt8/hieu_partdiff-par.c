@@ -195,41 +195,60 @@ static
 void
 initMatrices (struct calculation_arguments* arguments, struct options const* options)
 {
-	uint64_t g, i, j;                                /*  local variables for loops   */
+  uint64_t g, i, j;                                /*  local variables for loops   */
 
-	uint64_t const N = arguments->N;
-	double const h = arguments->h;
-	double*** Matrix = arguments->Matrix;
+  uint64_t const N = arguments->N;
+  double const h = arguments->h;
+  double*** Matrix = arguments->Matrix;
 
-	/* initialize matrix/matrices with zeros */
-	for (g = 0; g < arguments->num_matrices; g++)
-	{
-		for (i = 0; i < g_alloc_size; i++)
-		{
-			for (j = 0; j <= N; j++)
-			{
-				Matrix[g][i][j] = 0.0;
-			}
-		}
-	}
+  /* initialize matrix/matrices with zeros */
+  for (g = 0; g < arguments->num_matrices; g++)
+  {
+    for (i = 0; i < g_alloc_size; i++)
+    {
+      for (j = 0; j <= N; j++)
+      {
+        Matrix[g][i][j] = 0.0;
+      }
+    }
+  }
 
-	/* initialize borders, depending on function (function 2: nothing to do) */
-	if (options->inf_func == FUNC_F0)
-	{
-		for (g = 0; g < arguments->num_matrices; g++)
-		{
-			for (i = 0; i <= N; i++)
-			{
-				Matrix[g][i][0] = 1.0 - (h * i);
-				Matrix[g][i][N] = h * i;
-				Matrix[g][0][i] = 1.0 - (h * i);
-				Matrix[g][N][i] = h * i;
-			}
+  /* initialize borders, depending on function (function 2: nothing to do) */
+  if (options->inf_func == FUNC_F0)
+  {
+    for (g = 0; g < arguments->num_matrices; g++)
+    {
+      if (g_rank == 0){
 
-			Matrix[g][N][0] = 0.0;
-			Matrix[g][0][N] = 0.0;
-		}
-	}
+        for (i = 0; i <= N; i++)
+        {
+          Matrix[g][0][i] = 1.0 - (h * i);
+        }
+
+      } else if (g_rank == g_num_procs - 1) {
+
+        for (i = 0; i <= N; i++)
+        {
+          Matrix[g][g_alloc_size-1][i] = h * i;
+        }
+      } 
+      
+      // for every process
+      for (i = 0; i < g_alloc_size; i++)
+      {
+        j = g_minMat + i;
+        Matrix[g][i][0] = 1.0 - (h * j);
+        Matrix[g][i][N] = h * j;
+      }
+
+      if (g_rank == 0) {
+        Matrix[g][0][N] = 0.0;
+      } else if (g_rank == g_num_procs - 1) {
+        Matrix[g][g_alloc_size-1][0] = 0.0;
+      }
+
+    }
+  }
 }
 
 /* ************************************************************************ */
@@ -451,11 +470,11 @@ main (int argc, char** argv)
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
-  return 0;
 
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
 	gettimeofday(&comp_time, NULL);
+  return 0;
 
 	displayStatistics(&arguments, &results, &options);
 	DisplayMatrix(&arguments, &results, &options);
