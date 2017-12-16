@@ -217,68 +217,35 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 		}
 	}
 
-    /* initialize borders, depending on function (function 2: nothing to do) */
-    /*
-	if (options->inf_func == FUNC_F0)
-	{
-		for (g = 0; g < arguments->num_matrices; g++)
-		{
-			for (i = 0; i < g_alloc_size; i++)
-			{
-				Matrix[g][i][0] = 1.0 - (h * i);
-				Matrix[g][i][N] = h * i;
-				if (g_rank == 0){
-                    Matrix[g][0][i] = 1.0 - (h * i);
-                } else if (g_rank == g_num_procs - 1) {
-                    Matrix[g][g_alloc_size][i] = h * i;
-                }
-			}
-
-            if (g_rank == g_num_procs - 1){
-                Matrix[g][g_alloc_size][0] = 0.0;
-            } else if (g_rank == 0){
-                Matrix[g][0][N] = 0.0;
-            }
-		}
-	}
-    */
 
     /* initialize borders, depending on function (function 2: nothing to do) */
-	if (options->inf_func == FUNC_F0)
-	{
-        if (g_rank == 0){
-            for (g = 0; g < arguments->num_matrices; g++)
-            {
-                for (i = 0; i < g_alloc_size; i++)
+	if (options->inf_func == FUNC_F0) {
+        for (g = 0; g < arguments->num_matrices; g++) {
+            if (g_rank == 0) {
+                for (i = 0; i <= N; i++)
                 {
-                    Matrix[g][i][0] = 1.0 - (h * i);
-                    Matrix[g][i][N] = h * i;
                     Matrix[g][0][i] = 1.0 - (h * i);
                 }
-                Matrix[g][0][N] = 0.0;
-            }
-        } else if (g_rank == g_num_procs - 1){
-            for (g = 0; g < arguments->num_matrices; g++)
-            {
-                for (i = 0; i < g_alloc_size; i++)
+            } else if (g_rank == g_num_procs - 1) {
+                for (i = 0; i <= N; i++)
                 {
-                    Matrix[g][i][0] = 1.0 - (h * i);
-                    Matrix[g][i][N] = h * i;
                     Matrix[g][g_alloc_size-1][i] = h * i;
                 }
+            }
+            // all
+            for (i = 0; i < g_alloc_size; i++)
+            {
+                j = g_minMat + i;
+                Matrix[g][i][0] = 1.0 - (h * j);
+                Matrix[g][i][N] = h * j;
+            }
+
+            if (g_rank == 0) {
+                Matrix[g][0][N] = 0.0;
+            } else if (g_rank == g_num_procs - 1) {
                 Matrix[g][g_alloc_size-1][0] = 0.0;
             }
-        } else {
-            for (g = 0; g < arguments->num_matrices; g++)
-            {
-                for (i = 0; i < g_alloc_size; i++)
-                {
-                    Matrix[g][i][0] = 1.0 - (h * i);
-                    Matrix[g][i][N] = h * i;
-                }
-            }
         }
-
 	}
 }
 
