@@ -30,6 +30,8 @@
 #include <mpi.h>
 #include "partdiff-par.h"
 
+int rank, num_procs;
+
 struct calculation_arguments
 {
 	uint64_t  N;              /* number of spaces between lines (lines=N+1)     */
@@ -381,6 +383,18 @@ main (int argc, char** argv)
 	AskParams(&options, argc, argv);
 
 	initVariables(&arguments, &results, &options);
+
+	// MPI INIT
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	if (options->method == METH_JACOBI){
+		MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	} else {
+		// run METH_GAUSS_SEIDEL sequential
+		num_procs = 1;
+		// OR:
+		// return -1;
+	}
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
