@@ -30,7 +30,15 @@
 #include <mpi.h>
 #include "partdiff-par.h"
 
-int rank, num_procs;
+struct mpi_related_values
+{
+	int rank;				/* process rank */
+	int num_procs;			/* number of processes working */
+	int minMat;				/* lower index for matrix-section */
+	int maxMat;				/* upper index for matrix-section */
+};
+
+struct mpi_related_values mpi_related;	// Have global for each process
 
 struct calculation_arguments
 {
@@ -110,6 +118,15 @@ allocateMemory (size_t size)
 	return p;
 }
 
+static
+void
+setLowAndHigh(int matSize){
+	// TODO
+	// mpi_related.minMat = 0;
+	// mpi_related.maxMat = 0;
+}
+
+
 /* ************************************************************************ */
 /* allocateMatrices: allocates memory for matrices                          */
 /* ************************************************************************ */
@@ -124,6 +141,8 @@ allocateMatrices (struct calculation_arguments* arguments)
 	arguments->M = allocateMemory(arguments->num_matrices * (N + 1) * (N + 1) * sizeof(double));
 	arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
 
+	setLowAndHigh(N);
+	// Based on minMat and maxMat TODO
 	for (i = 0; i < arguments->num_matrices; i++)
 	{
 		arguments->Matrix[i] = allocateMemory((N + 1) * sizeof(double*));
@@ -392,21 +411,28 @@ main (int argc, char** argv)
 	} else {
 		// run METH_GAUSS_SEIDEL sequential
 		num_procs = 1;
-		// OR:
-		// return -1;
+		MPI_Comm_rank(MPI_COMM_WORLD, &mpi_related.rank);
+		if (options->method == METH_JACOBI){
+			MPI_Comm_size(MPI_COMM_WORLD, &mpi_related.num_procs);
+		} else {
+			// run METH_GAUSS_SEIDEL sequential
+			mpi_related.num_procs = 1;
+			// OR:
+			// return -1;
+		}
+
+		allocateMatrices(&arguments);
+		initMatrices(&arguments, &options);
+
+		gettimeofday(&start_time, NULL);
+		calculate(&arguments, &results, &options);
+		gettimeofday(&comp_time, NULL);
+
+		displayStatistics(&arguments, &results, &options);
+		DisplayMatrix(&arguments, &results, &options);
+
+		freeMatrices(&arguments);
+
+		return 0;
 	}
-
-	allocateMatrices(&arguments);
-	initMatrices(&arguments, &options);
-
-	gettimeofday(&start_time, NULL);
-	calculate(&arguments, &results, &options);
-	gettimeofday(&comp_time, NULL);
-
-	displayStatistics(&arguments, &results, &options);
-	DisplayMatrix(&arguments, &results, &options);
-
-	freeMatrices(&arguments);
-
-	return 0;
 }
