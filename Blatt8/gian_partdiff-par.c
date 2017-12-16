@@ -604,7 +604,7 @@ main (int argc, char** argv)
 
 
 	freeMatrices(&arguments);
-
+	MPI_Finalize();
 	return 0;
 }
 
