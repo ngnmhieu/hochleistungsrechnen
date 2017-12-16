@@ -32,11 +32,11 @@
 
 
 int g_rank;					/* process rank */
-int g_num_procs;			/* number of processes working */
+int g_num_procs;		/* number of processes working */
 int g_minMat;				/* lower index for matrix-section */
 int g_maxMat;				/* upper index for matrix-section */
-int g_subMatSize;			/* number of rows in the sub-matrix of the process */
-uint64_t g_alloc_size;      /* number of allocated rows g_subMatSize + 1 for rank=0 and rank=num_procs-1; +2 else*/
+int g_size;				 /* number of matrix rows */
+uint64_t g_alloc_size;
 
 struct calculation_arguments
 {
@@ -118,46 +118,44 @@ allocateMemory (size_t size)
 
 
 /* ************************************************************************ */
-/* setMatIndex: sets Bounds of Sub-Matrix for the calling process           */
+/* setLowAndHigh: sets Bounds of Sub-Matrix for the calling process         */
 /* ************************************************************************ */
 static
 void
-partitionMatrix(int num_rows){
+setLowAndHigh(int num_rows) {
 
-    // Split all rows equally [base_size]
-    int base_size = num_rows / g_num_procs;
-    // and give rest to first n <= rest
-    int num_big = num_rows % g_num_procs;
-    /*
+	// Split all rows equally [base_size]
+	int base_size = num_rows / g_num_procs;
+	// and give rest to first n <= rest
+	int num_big = num_rows % g_num_procs;
+	/*
      * number of processes that receive one row more = rest => (0 --> rest - 1) => rank < num_big
      * calculate number of processes that receive one more, prior to current process
      * eg: num_big = 4 & rank = 3 ==> rank 0, 1, 2 have one more also --> #rank prior to this one
      * eg: num_big = 4 & rank = 4 ==> rank 0, 1, 2, 3 have one more --> num_big prior to this one
      */
-    int num_big_pres = (g_rank < num_big) ? g_rank : num_big;
-    /*
+	int num_big_pres = (g_rank < num_big) ? g_rank : num_big;
+	/*
      * number of processes that do not receive one more, prior to current process
      * max(rank - num_big_pres, 0)
      * eg: num_big = 4 & rank = 3 ==> 3 bigger prior => 3 - 3 = 0; no small prior
      * eg: num_big = 4 & rank = 5 ==> 4 bigger prior (0,1,2,3) => 5 - 4 = 1; 1 smaller prior (4)
      */
-    int num_sml_pres = (g_rank - num_big_pres > 0) ? g_rank - num_big_pres : 0;
-    // number of bigger prior to this * bigger-size + number of smaller prior * base-size
-    int g_minMat = (num_big_pres * (base_size + 1)) + num_sml_pres * base_size;
-    // if bigger: minIndex + bigSie; else: minIndex + smallSize
-    int g_subMatSize = (g_rank < num_big) ? base_size + 1 : base_size;
-    int g_maxMat = g_minMat + g_subMatSize - 1;
+	int num_sml_pres = (g_rank - num_big_pres > 0) ? g_rank - num_big_pres : 0;
+	// number of bigger prior to this * bigger-size + number of smaller prior * base-size
+	g_minMat = (num_big_pres * (base_size + 1)) + num_sml_pres * base_size;
+	// if bigger: minIndex + bigSie; else: minIndex + smallSize
+	g_size   = (g_rank < num_big) ? base_size + 1 : base_size;
+	g_maxMat = g_minMat + g_size - 1;
 
-    // if g_num_procs > num_rows --> g_subMatSize = 0 for g_rank < num_big (<== base_size = 0)
-    //if(g_subMatSize){
-    //    g_minMat = NULL;
-    //    g_maxMat = NULL;
-    //}
-
-    // store row below (rank = 0) / above&below (0 < rank < num_proc - 1) / above (rank = num_proc - 1) also
-    g_alloc_size = (g_rank == 0 || g_rank == g_num_procs - 1) ? g_subMatSize + 1 : g_subMatSize + 2;
-
-    printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_subMatSize);
+	// extra rows for data from other processes
+	// for the first and last rank only one extra row
+	if (g_rank == 0 || g_rank == g_num_procs - 1) {
+		g_alloc_size = g_size + 1;
+	} else {
+		g_alloc_size = g_size + 2;
+	}
+	printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size);
 }
 
 
@@ -172,24 +170,21 @@ allocateMatrices (struct calculation_arguments* arguments)
 
 	uint64_t const N = arguments->N;
 
-    // Split the matrix over the processes
-    partitionMatrix(N + 1);
+	// set the appropriate g_minMat and g_maxMat
+	setLowAndHigh(N);
 
-    if(g_subMatSize > 0){
+	printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size);
+	arguments->M = allocateMemory(arguments->num_matrices * g_alloc_size * (N + 1) * sizeof(double));
+	arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
 
-        printf("[Rank = %d] Allocating %" PRIu64 " rows of memory.\n", g_rank, g_alloc_size);
+	for (i = 0; i < arguments->num_matrices; i++)
+	{
+		arguments->Matrix[i] = allocateMemory(g_alloc_size * sizeof(double*));
 
-	    arguments->M = allocateMemory(arguments->num_matrices * (g_subMatSize) * (N + 1) * sizeof(double));
-	    arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
-
-	    for (i = 0; i < arguments->num_matrices; i++) {
-            arguments->Matrix[i] = allocateMemory((g_alloc_size) * sizeof(double *));
-
-            for (j = 0; j <= N; j++) {
-                arguments->Matrix[i][j] = arguments->M + (i * (g_subMatSize) * (N + 1)) + (j * (N + 1));
-            }
-        }
-
+		for (j = 0; j < g_alloc_size; j++)
+		{
+			arguments->Matrix[i][j] = arguments->M + (i * g_alloc_size * (N + 1)) + (j * (N + 1));
+		}
 	}
 }
 
@@ -218,40 +213,39 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 		}
 	}
 
-
-    /* initialize borders, depending on function (function 2: nothing to do) */
+	/* initialize borders, depending on function (function 2: nothing to do) */
 	if (options->inf_func == FUNC_F0) {
-        for (g = 0; g < arguments->num_matrices; g++) {
-            if (g_rank == 0) {
-                for (i = 0; i <= N; i++)
-                {
-                    Matrix[g][0][i] = 1.0 - (h * i);
-                }
-            } // if instead of else if -> can be only one
-            if (g_rank == g_num_procs - 1) {
-                for (i = 0; i <= N; i++)
-                {
-                    Matrix[g][g_alloc_size-1][i] = h * i;
-                }
-            }
-            // all
-            for (i = 0; i < g_alloc_size; i++)
-            {
-                // emulate i over all rows
-                j = g_minMat + i;
-                Matrix[g][i][0] = 1.0 - (h * j);
-                Matrix[g][i][N] = h * j;
-            }
+		for (g = 0; g < arguments->num_matrices; g++) {
+			if (g_rank == 0) {
+				for (i = 0; i <= N; i++)
+				{
+					Matrix[g][0][i] = 1.0 - (h * i);
+				}
+			} // if instead of else if -> can be only one
+			if (g_rank == g_num_procs - 1) {
+				for (i = 0; i <= N; i++)
+				{
+					Matrix[g][g_alloc_size-1][i] = h * i;
+				}
+			}
+			// all
+			for (i = 0; i < g_alloc_size; i++)
+			{
+				// emulate i over all rows
+				j = g_minMat + i;
+				Matrix[g][i][0] = 1.0 - (h * j);
+				Matrix[g][i][N] = h * j;
+			}
 
-            if (g_rank == 0) {
-                // first row of whole matrix
-                Matrix[g][0][N] = 0.0;
-            } // if instead of else if -> can be only one
-            if (g_rank == g_num_procs - 1) {
-                // last row of whole matrix
-                Matrix[g][g_alloc_size-1][0] = 0.0;
-            }
-        }
+			if (g_rank == 0) {
+				// first row of whole matrix
+				Matrix[g][0][N] = 0.0;
+			} // if instead of else if -> can be only one
+			if (g_rank == g_num_procs - 1) {
+				// last row of whole matrix
+				Matrix[g][g_alloc_size-1][0] = 0.0;
+			}
+		}
 	}
 }
 
@@ -301,54 +295,55 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 
 		maxresiduum = 0;
 
-        if (g_num_procs > 1)
-        {
-            // MSGs between processes
-            MPI_reqeust send_to_next, send_to_prev, get_from_next, get_from_prev;
-            // Send first to prev
-            if (g_rank > 0){
-                // Index 1 because 0 is buffer (dont send)
-                MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &send_to_prev);
-            }
-            // Send last to next
-            if (g_rank < g_num_procs - 1){
-                // Index g_alloc_size - 2 because last is buffer (dont send)
-                MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank + 1, 0, MPI_COMM_WORLD, &send_to_next)
-            }
-            // Get first from next
-            if (g_rank < g_num_procs - 1){
-                // Index g_alloc_size - 1 because last is buffer (receive)
-                MPI_Irecv(Matrix_In[g_alloc_size - 1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &get_from_next);
-            }
-            // Get last from prev
-            if (g_rank > 0){
-                // Index 0 because 0 is buffer (receive)
-                MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &get_from_prev);
-            }
+		if (g_num_procs > 1)
+		{
+			// MSGs between processes
+			MPI_reqeust send_to_next, send_to_prev, get_from_next, get_from_prev;
+			// Send first to prev
+			if (g_rank > 0){
+				// Index 1 because 0 is buffer (dont send)
+				MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &send_to_prev);
+			}
+			// Send last to next
+			if (g_rank < g_num_procs - 1){
+				// Index g_alloc_size - 2 because last is buffer (dont send)
+				MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank + 1, 0, MPI_COMM_WORLD, &send_to_next)
+			}
+			// Get first from next
+			if (g_rank < g_num_procs - 1){
+				// Index g_alloc_size - 1 because last is buffer (receive)
+				MPI_Irecv(Matrix_In[g_alloc_size - 1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &get_from_next);
+			}
+			// Get last from prev
+			if (g_rank > 0){
+				// Index 0 because 0 is buffer (receive)
+				MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &get_from_prev);
+			}
 
-            // Wait for reqeusts to finish
-            if (g_rank > 0){
-                MPI_Wait(&send_to_prev, MPI_STATUS_IGNORE);
-                MPI_Wait(&get_from_next, MPI_STATUS_IGNORE);
-            }
-            if (g_rank < g_num_procs - 1){
-                MPI_Wait(&send_to_next, MPI_STATUS_IGNORE);
-                MPI_Wait(&get_from_prev, MPI_STATUS_IGNORE);
-            }
+			// Wait for reqeusts to finish
+			if (g_rank > 0){
+				MPI_Wait(&send_to_prev, MPI_STATUS_IGNORE);
+				MPI_Wait(&get_from_next, MPI_STATUS_IGNORE);
+			}
+			if (g_rank < g_num_procs - 1){
+				MPI_Wait(&send_to_next, MPI_STATUS_IGNORE);
+				MPI_Wait(&get_from_prev, MPI_STATUS_IGNORE);
+			}
 
-            // Synch
-            MPI_Barrier(MPI_COMM_WORLD);
-        }
+			// Synch
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
+
+		printf("[Rank = %d] Finish sending and receiving\n", g_rank);
 
 		/* over all rows */
-		for (i = 1; i < g_alloc_size - 1; i++)
+		for (i = 1; i < g_alloc_size-1; i++)
 		{
 			double fpisin_i = 0.0;
 
 			if (options->inf_func == FUNC_FPISIN)
 			{
-                // emulate i over all rows
-				fpisin_i = fpisin * sin(pih * (double)(i + g_minMat));
+				fpisin_i = fpisin * sin(pih * (double)i);
 			}
 
 			/* over all columns */
@@ -380,10 +375,11 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 		m1 = m2;
 		m2 = i;
 
-        // reduce maxresidium
-        if (g_num_procs > 1) {
-            MPI_Allreduce(&residuum, &maxresiduum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        }
+		// reduce maxresidium
+		if (g_num_procs > 1) {
+			MPI_Allreduce(&residuum, &maxresiduum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+		}
+
 
 		/* check for stopping calculation depending on termination method */
 		if (options->termination == TERM_PREC)
@@ -456,6 +452,8 @@ displayStatistics (struct calculation_arguments const* arguments, struct calcula
 	printf("\n");
 }
 
+
+
 /****************************************************************************/
 /** Beschreibung der Funktion DisplayMatrix:                               **/
 /**                                                                        **/
@@ -468,7 +466,77 @@ displayStatistics (struct calculation_arguments const* arguments, struct calcula
 /****************************************************************************/
 static
 void
-DisplayMatrix (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options)
+DisplayMatrix (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options, int rank, int size, int from, int to)
+{
+	int const elements = 8 * options->interlines + 9;
+
+	int x, y;
+	double** Matrix = arguments->Matrix[results->m];
+	MPI_Status status;
+
+	/* first line belongs to rank 0 */
+	if (rank == 0)
+		from--;
+
+	/* last line belongs to rank size - 1 */
+	if (rank + 1 == size)
+		to++;
+
+	if (rank == 0)
+		printf("Matrix:\n");
+
+	for (y = 0; y < 9; y++)
+	{
+		int line = y * (options->interlines + 1);
+
+		if (rank == 0)
+		{
+			/* check whether this line belongs to rank 0 */
+			if (line < from || line > to)
+			{
+				/* use the tag to receive the lines in the correct order
+                 * the line is stored in Matrix[0], because we do not need it anymore */
+				MPI_Recv(Matrix[0], elements, MPI_DOUBLE, MPI_ANY_SOURCE, 42 + y, MPI_COMM_WORLD, &status);
+			}
+		}
+		else
+		{
+			if (line >= from && line <= to)
+			{
+				/* if the line belongs to this process, send it to rank 0
+                 * (line - from + 1) is used to calculate the correct local address */
+				MPI_Send(Matrix[line - from + 1], elements, MPI_DOUBLE, 0, 42 + y, MPI_COMM_WORLD);
+			}
+		}
+
+		if (rank == 0)
+		{
+			for (x = 0; x < 9; x++)
+			{
+				int col = x * (options->interlines + 1);
+
+				if (line >= from && line <= to)
+				{
+					/* this line belongs to rank 0 */
+					printf("%7.4f", Matrix[line][col]);
+				}
+				else
+				{
+					/* this line belongs to another rank and was received above */
+					printf("%7.4f", Matrix[0][col]);
+				}
+			}
+
+			printf("\n");
+		}
+	}
+
+	fflush(stdout);
+}
+
+static
+void
+DisplayMatrix_single (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options)
 {
 	int x, y;
 
@@ -520,19 +588,23 @@ main (int argc, char** argv)
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
 
-    // TEMP ------
-    MPI_Finalize();
-    return 0;
-    // TEMP ------
-
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
 	gettimeofday(&comp_time, NULL);
 
-	displayStatistics(&arguments, &results, &options);
-	DisplayMatrix(&arguments, &results, &options);
+	if (g_rank == 0) {
+		displayStatistics(&arguments, &results, &options);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (g_num_procs > 1){
+		DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
+	} else {
+		DisplayMatrix_single(&arguments, &results, &options);
+	}
+
 
 	freeMatrices(&arguments);
 
 	return 0;
 }
+
