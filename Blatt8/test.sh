@@ -39,9 +39,6 @@ mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NA
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
-# rm $MPI_OUT
-# rm $SEQ_OUT
-
 #####################################################################
 
 NUM_PROC=4
@@ -56,9 +53,6 @@ mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NA
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
-# rm $MPI_OUT
-# rm $SEQ_OUT
-
 #####################################################################
 
 NUM_PROC=4
@@ -72,8 +66,5 @@ echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTER
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
-
-# rm $MPI_OUT
-# rm $SEQ_OUT
 
 echo "Done"

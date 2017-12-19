@@ -26,7 +26,7 @@ vampir:
 	vtcc -vt:cc $(CC) $(CFLAGS) $(OBJS) -o circle -lm
 
 clean:
-	rm -f partdiff-seq partdiff-par *.z *.thumb *.o *.otf
+	rm -f partdiff-seq partdiff-par *.z *.thumb *.o *.otf partdiff-*.txt
 
 test: partdiff-par partdiff-seq
 	./test.sh
