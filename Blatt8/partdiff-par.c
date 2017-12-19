@@ -337,13 +337,20 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
     /* printf("[Rank = %d] Finish sending and receiving\n", g_rank); */
 
 		/* over all rows */
-		for (i = 1; i < g_alloc_size-1; i++)
+    /* uint64_t end = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1; */
+		for (i = 1; i < g_alloc_size - 1; i++)
 		{
 			double fpisin_i = 0.0;
 
 			if (options->inf_func == FUNC_FPISIN)
 			{
-				fpisin_i = fpisin * sin(pih * (double)i);
+        uint64_t global_i;
+        if (g_rank == 0) {
+          global_i = g_minMat + i;
+        } else {
+          global_i = g_minMat + i - 1;
+        }
+				fpisin_i = fpisin * sin(pih * (double) global_i);
 			}
 
 			/* over all columns */
@@ -554,18 +561,15 @@ main (int argc, char** argv)
 	if (options.method == METH_JACOBI){
 		MPI_Comm_size(MPI_COMM_WORLD, &g_num_procs);
 	} else {
-		// run METH_GAUSS_SEIDEL sequential
 		g_num_procs = 1;
-		// OR:
-		// return -1;
 	}
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
   
   // DEBUG
-	DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
-  return 0;  
+	/* DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat); */
+  /* return 0;   */
 
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
