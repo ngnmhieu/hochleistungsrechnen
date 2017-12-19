@@ -155,7 +155,7 @@ setLowAndHigh(int num_rows) {
   } else {
     g_alloc_size = g_size + 2;
   }
-  printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size);
+  /* printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size); */
 }
 
 
@@ -171,9 +171,9 @@ allocateMatrices (struct calculation_arguments* arguments)
 	uint64_t const N = arguments->N;
 
   // set the appropriate g_minMat and g_maxMat
-	setLowAndHigh(N);
+	setLowAndHigh(N+1);
 
-  printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size);
+  /* printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size); */
   arguments->M = allocateMemory(arguments->num_matrices * g_alloc_size * (N + 1) * sizeof(double));
   arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
 
@@ -234,9 +234,15 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
       } 
       
       // for every process
-      for (i = 0; i < g_alloc_size; i++)
+      uint64_t start = g_rank == 0 ? 0 : 1;
+      uint64_t end = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1;
+      for (i = start; i < end; i++)
       {
-        j = g_minMat + i;
+        if (g_rank == 0) {
+          j = g_minMat + i;
+        } else {
+          j = g_minMat + i - 1;
+        }
         Matrix[g][i][0] = 1.0 - (h * j);
         Matrix[g][i][N] = h * j;
       }
@@ -258,13 +264,13 @@ static
 void
 calculate (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
-	int i, j;                                   /* local variables for loops */
+	uint64_t i, j;                                   /* local variables for loops */
 	int m1, m2;                                 /* used as indices for old and new matrices */
 	double star;                                /* four times center value minus 4 neigh.b values */
 	double residuum;                            /* residuum of current iteration */
 	double maxresiduum;                         /* maximum residuum value of a slave in iteration */
 
-	int const N = arguments->N;
+	uint64_t const N = arguments->N;
 	double const h = arguments->h;
 
 	double pih = 0.0;
@@ -328,7 +334,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
       MPI_Wait(&rdown, MPI_STATUS_IGNORE);
     }
 
-    printf("[Rank = %d] Finish sending and receiving\n", g_rank);
+    /* printf("[Rank = %d] Finish sending and receiving\n", g_rank); */
 
 		/* over all rows */
 		for (i = 1; i < g_alloc_size-1; i++)
@@ -460,7 +466,7 @@ displayStatistics (struct calculation_arguments const* arguments, struct calcula
  */
 static
 void
-DisplayMatrix_mpi (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options, int rank, int size, int from, int to)
+DisplayMatrix (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options, int rank, int size, int from, int to)
 {
   int const elements = 8 * options->interlines + 9;
 
@@ -528,41 +534,6 @@ DisplayMatrix_mpi (struct calculation_arguments* arguments, struct calculation_r
   fflush(stdout);
 }
 
-/****************************************************************************/
-/** Beschreibung der Funktion DisplayMatrix:                               **/
-/**                                                                        **/
-/** Die Funktion DisplayMatrix gibt eine Matrix                            **/
-/** in einer "ubersichtlichen Art und Weise auf die Standardausgabe aus.   **/
-/**                                                                        **/
-/** Die "Ubersichtlichkeit wird erreicht, indem nur ein Teil der Matrix    **/
-/** ausgegeben wird. Aus der Matrix werden die Randzeilen/-spalten sowie   **/
-/** sieben Zwischenzeilen ausgegeben.                                      **/
-/****************************************************************************/
-static
-void
-DisplayMatrix (struct calculation_arguments* arguments, struct calculation_results* results, struct options* options)
-{
-	int x, y;
-
-	double** Matrix = arguments->Matrix[results->m];
-
-	int const interlines = options->interlines;
-
-	printf("Matrix:\n");
-
-	for (y = 0; y < 9; y++)
-	{
-		for (x = 0; x < 9; x++)
-		{
-			printf ("%7.4f", Matrix[y * (interlines + 1)][x * (interlines + 1)]);
-		}
-
-		printf ("\n");
-	}
-
-	fflush (stdout);
-}
-
 /* ************************************************************************ */
 /*  main                                                                    */
 /* ************************************************************************ */
@@ -591,6 +562,10 @@ main (int argc, char** argv)
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
+  
+  // DEBUG
+	DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
+  return 0;  
 
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
@@ -600,7 +575,7 @@ main (int argc, char** argv)
     displayStatistics(&arguments, &results, &options);
   }
   MPI_Barrier(MPI_COMM_WORLD);
-	DisplayMatrix_mpi(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
+	DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat);
 
 	freeMatrices(&arguments);
 
