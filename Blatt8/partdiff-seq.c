@@ -384,6 +384,7 @@ main (int argc, char** argv)
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
 
+  // DEBUG
 	/* DisplayMatrix(&arguments, &results, &options); */
   /* return 0; */
 

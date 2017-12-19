@@ -155,6 +155,7 @@ setLowAndHigh(int num_rows) {
   } else {
     g_alloc_size = g_size + 2;
   }
+
   /* printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size); */
 }
 
@@ -196,7 +197,8 @@ void
 initMatrices (struct calculation_arguments* arguments, struct options const* options)
 {
   uint64_t g, i, j;                                /*  local variables for loops   */
-
+  uint64_t global_i;
+  uint64_t start_row, end_row;
   uint64_t const N = arguments->N;
   double const h = arguments->h;
   double*** Matrix = arguments->Matrix;
@@ -219,14 +221,11 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
     for (g = 0; g < arguments->num_matrices; g++)
     {
       if (g_rank == 0){
-
         for (i = 0; i <= N; i++)
         {
           Matrix[g][0][i] = 1.0 - (h * i);
         }
-
       } else if (g_rank == g_num_procs - 1) {
-
         for (i = 0; i <= N; i++)
         {
           Matrix[g][g_alloc_size-1][i] = h * i;
@@ -234,17 +233,13 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
       } 
       
       // for every process
-      uint64_t start = g_rank == 0 ? 0 : 1;
-      uint64_t end = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1;
-      for (i = start; i < end; i++)
+      start_row = g_rank == 0 ? 0 : 1;
+      end_row = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1;
+      for (i = start_row; i < end_row; i++)
       {
-        if (g_rank == 0) {
-          j = g_minMat + i;
-        } else {
-          j = g_minMat + i - 1;
-        }
-        Matrix[g][i][0] = 1.0 - (h * j);
-        Matrix[g][i][N] = h * j;
+        global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
+        Matrix[g][i][0] = 1.0 - (h * global_i);
+        Matrix[g][i][N] = h * global_i;
       }
 
       if (g_rank == 0) {
@@ -264,7 +259,8 @@ static
 void
 calculate (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
-	uint64_t i, j;                                   /* local variables for loops */
+	uint64_t i, j;                              /* local variables for loops */
+  uint64_t global_i;
 	int m1, m2;                                 /* used as indices for old and new matrices */
 	double star;                                /* four times center value minus 4 neigh.b values */
 	double residuum;                            /* residuum of current iteration */
@@ -344,12 +340,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 
 			if (options->inf_func == FUNC_FPISIN)
 			{
-        uint64_t global_i;
-        if (g_rank == 0) {
-          global_i = g_minMat + i;
-        } else {
-          global_i = g_minMat + i - 1;
-        }
+        global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
 				fpisin_i = fpisin * sin(pih * (double) global_i);
 			}
 
