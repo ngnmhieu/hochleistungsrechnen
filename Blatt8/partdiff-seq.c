@@ -384,10 +384,6 @@ main (int argc, char** argv)
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
 
-  // DEBUG
-	/* DisplayMatrix(&arguments, &results, &options); */
-  /* return 0; */
-
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);
 	gettimeofday(&comp_time, NULL);

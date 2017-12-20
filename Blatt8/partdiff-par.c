@@ -35,7 +35,7 @@ int g_rank;					/* process rank */
 int g_num_procs;		/* number of processes working */
 int g_minMat;				/* lower index for matrix-section */
 int g_maxMat;				/* upper index for matrix-section */
-int g_size;				 /* number of matrix rows */
+int g_size;				  /* number of matrix rows */
 uint64_t g_alloc_size;
 
 struct calculation_arguments
@@ -150,7 +150,9 @@ setLowAndHigh(int num_rows) {
   
   // extra rows for data from other processes
   // for the first and last rank only one extra row
-  if (g_rank == 0 || g_rank == g_num_procs - 1) {
+  if (g_num_procs == 1) {
+    g_alloc_size = g_size;
+  } else if (g_rank == 0 || g_rank == g_num_procs - 1) {
     g_alloc_size = g_size + 1; 
   } else {
     g_alloc_size = g_size + 2;
@@ -220,12 +222,13 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
   {
     for (g = 0; g < arguments->num_matrices; g++)
     {
-      if (g_rank == 0){
+      if (g_rank == 0) {
         for (i = 0; i <= N; i++)
         {
           Matrix[g][0][i] = 1.0 - (h * i);
         }
-      } else if (g_rank == g_num_procs - 1) {
+      }
+      if (g_rank == g_num_procs - 1) {
         for (i = 0; i <= N; i++)
         {
           Matrix[g][g_alloc_size-1][i] = h * i;
@@ -244,10 +247,10 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
 
       if (g_rank == 0) {
         Matrix[g][0][N] = 0.0;
-      } else if (g_rank == g_num_procs - 1) {
+      }
+      if (g_rank == g_num_procs - 1) {
         Matrix[g][g_alloc_size-1][0] = 0.0;
       }
-
     }
   }
 }
@@ -330,10 +333,7 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
       MPI_Wait(&rdown, MPI_STATUS_IGNORE);
     }
 
-    /* printf("[Rank = %d] Finish sending and receiving\n", g_rank); */
-
 		/* over all rows */
-    /* uint64_t end = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1; */
 		for (i = 1; i < g_alloc_size - 1; i++)
 		{
 			double fpisin_i = 0.0;
@@ -532,6 +532,7 @@ DisplayMatrix (struct calculation_arguments* arguments, struct calculation_resul
   fflush(stdout);
 }
 
+
 /* ************************************************************************ */
 /*  main                                                                    */
 /* ************************************************************************ */
@@ -557,10 +558,6 @@ main (int argc, char** argv)
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);
-  
-  // DEBUG
-	/* DisplayMatrix(&arguments, &results, &options, g_rank, g_size, g_minMat, g_maxMat); */
-  /* return 0;   */
 
 	gettimeofday(&start_time, NULL);
 	calculate(&arguments, &results, &options);

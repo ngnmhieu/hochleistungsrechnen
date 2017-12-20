@@ -26,11 +26,24 @@ NACH_ITERATION=2
 
 #####################################################################
 
-NUM_PROC=4
+NUM_PROC=1
 INTERLINES=0
 ITERATIONS=82
 FUNC=1
-# SEQ_OUT=./referenz/Jacobi.f1
+MPI_OUT=partdiff-par-0.txt
+SEQ_OUT=partdiff-seq-0.txt
+echo "\nTest 0: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+diff $SEQ_OUT $MPI_OUT
+
+#####################################################################
+
+NUM_PROC=1
+INTERLINES=0
+ITERATIONS=85
+FUNC=2
 MPI_OUT=partdiff-par-1.txt
 SEQ_OUT=partdiff-seq-1.txt
 echo "\nTest 1: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
@@ -43,8 +56,8 @@ diff $SEQ_OUT $MPI_OUT
 
 NUM_PROC=4
 INTERLINES=0
-ITERATIONS=85
-FUNC=2
+ITERATIONS=82
+FUNC=1
 MPI_OUT=partdiff-par-2.txt
 SEQ_OUT=partdiff-seq-2.txt
 echo "\nTest 2: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
@@ -56,12 +69,26 @@ diff $SEQ_OUT $MPI_OUT
 #####################################################################
 
 NUM_PROC=4
-INTERLINES=100
-ITERATIONS=500
+INTERLINES=0
+ITERATIONS=85
 FUNC=2
 MPI_OUT=partdiff-par-3.txt
 SEQ_OUT=partdiff-seq-3.txt
-echo "\nTest 2: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "\nTest 3: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+diff $SEQ_OUT $MPI_OUT
+
+#####################################################################
+
+NUM_PROC=4
+INTERLINES=100
+ITERATIONS=500
+FUNC=2
+MPI_OUT=partdiff-par-4.txt
+SEQ_OUT=partdiff-seq-4.txt
+echo "\nTest 4: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
 echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
