@@ -1,5 +1,4 @@
 #!/bin/sh
-
 # Usage: ./partdiff-par [num] [method] [lines] [func] [term] [prec/iter]
 #
 #   - num:       number of threads (1 .. 1024)
@@ -7,8 +6,7 @@
 #                  1: Gauß-Seidel
 #                  2: Jacobi
 #   - lines:     number of interlines (0 .. 10240)
-#                  matrixsize = (interlines * 8) + 9
-#   - func:      interference function (1 .. 2)
+#                  matrixsize = (interlines * 8) + 9 #   - func:      interference function (1 .. 2)
 #                  1: f(x,y) = 0
 #                  2: f(x,y) = 2 * pi^2 * sin(pi * x) * sin(pi * y)
 #   - term:      termination condition ( 1.. 2)
@@ -93,5 +91,20 @@ echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTER
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
+
+#####################################################################
+
+NUM_PROC=5
+INTERLINES=20
+PRECISION=1e-4
+FUNC=2
+MPI_OUT=partdiff-par-5.txt
+SEQ_OUT=partdiff-seq-5.txt
+echo "\nTest 5: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
+diff $SEQ_OUT $MPI_OUT
+
 
 echo "Done"
