@@ -258,12 +258,19 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
   }
 }
 
+static
+void
+calculate_gauss (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
+{
+  // TODO
+}
+
 /* ************************************************************************ */
 /* calculate: solves the equation                                           */
 /* ************************************************************************ */
 static
 void
-calculate (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
+calculate_jacobi (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
 	uint64_t i, j;                              /* local variables for loops */
   uint64_t global_i;
@@ -562,7 +569,11 @@ main (int argc, char** argv)
 	initMatrices(&arguments, &options);
 
 	gettimeofday(&start_time, NULL);
-	calculate(&arguments, &results, &options);
+	if (options.method == METH_JACOBI){
+    calculate_jacobi(&arguments, &results, &options);
+  } else {
+    calculate_gauss(&arguments, &results, &options);
+  }
 	gettimeofday(&comp_time, NULL);
 
   if (g_rank == 0) {
