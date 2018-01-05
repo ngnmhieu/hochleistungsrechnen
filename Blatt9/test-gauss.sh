@@ -34,9 +34,9 @@ FUNC=1
 MPI_OUT=output/partdiff-par-0.txt
 SEQ_OUT=output/partdiff-seq-0.txt
 echo "\nTest 0: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -48,9 +48,9 @@ FUNC=2
 MPI_OUT=output/partdiff-par-1.txt
 SEQ_OUT=output/partdiff-seq-1.txt
 echo "\nTest 1: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -62,9 +62,9 @@ FUNC=1
 MPI_OUT=output/partdiff-par-2.txt
 SEQ_OUT=output/partdiff-seq-2.txt
 echo "\nTest 2: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -76,9 +76,9 @@ FUNC=2
 MPI_OUT=output/partdiff-par-3.txt
 SEQ_OUT=output/partdiff-seq-3.txt
 echo "\nTest 3: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -90,9 +90,9 @@ FUNC=2
 MPI_OUT=output/partdiff-par-4.txt
 SEQ_OUT=output/partdiff-seq-4.txt
 echo "\nTest 4: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -104,9 +104,9 @@ FUNC=1
 MPI_OUT=output/partdiff-par-5.txt
 SEQ_OUT=output/partdiff-seq-5.txt
 echo "\nTest 5: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 #####################################################################
@@ -118,9 +118,9 @@ FUNC=2
 MPI_OUT=output/partdiff-par-6.txt
 SEQ_OUT=output/partdiff-seq-6.txt
 echo "\nTest 6: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
-echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
-mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
-./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
 diff $SEQ_OUT $MPI_OUT
 
 

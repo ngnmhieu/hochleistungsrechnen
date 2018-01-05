@@ -4,5 +4,7 @@
 *.swo
 *.idea
 .DS_Store
-test-posix.txt
-test-seq.txt
+partdiff-seq-*.txt
+partdiff-par-*.txt
+partdiff-seq
+partdiff-par
