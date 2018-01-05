@@ -95,12 +95,26 @@ diff $SEQ_OUT $MPI_OUT
 #####################################################################
 
 NUM_PROC=5
-INTERLINES=20
+INTERLINES=100
 PRECISION=1e-4
-FUNC=2
+FUNC=1
 MPI_OUT=partdiff-par-5.txt
 SEQ_OUT=partdiff-seq-5.txt
 echo "\nTest 5: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
+diff $SEQ_OUT $MPI_OUT
+
+#####################################################################
+
+NUM_PROC=10
+INTERLINES=20
+PRECISION=1e-4
+FUNC=2
+MPI_OUT=partdiff-par-6.txt
+SEQ_OUT=partdiff-seq-6.txt
+echo "\nTest 6: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
 echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $JACOBI $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT

@@ -158,6 +158,7 @@ setLowAndHigh(int num_rows) {
     g_alloc_size = g_size + 2;
   }
 
+  // DEBUG
   /* printf("[Rank = %d] %d rows -> %d processes. Rank %d: %d -> %d (%d rows)\n", g_rank, num_rows, g_num_procs, g_rank, g_minMat, g_maxMat, g_size); */
 }
 
@@ -176,7 +177,9 @@ allocateMatrices (struct calculation_arguments* arguments)
   // set the appropriate g_minMat and g_maxMat
 	setLowAndHigh(N+1);
 
+  // DEBUG
   /* printf("[Rank = %d] Allocating %ld rows of memory.\n", g_rank, g_alloc_size); */
+
   arguments->M = allocateMemory(arguments->num_matrices * g_alloc_size * (N + 1) * sizeof(double));
   arguments->Matrix = allocateMemory(arguments->num_matrices * sizeof(double**));
 
@@ -365,22 +368,21 @@ calculate (struct calculation_arguments const* arguments, struct calculation_res
 			}
 		}
 
-		results->stat_iteration++;
-		results->stat_precision = maxresiduum;
-
 		/* exchange m1 and m2 */
 		i = m1;
 		m1 = m2;
 		m2 = i;
 
-    int residuums[g_num_procs];
+    double residuums[g_num_procs];
     // Empfangen und Senden aller Residuum
-    MPI_Allgather(&residuum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Allgather(&maxresiduum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD);
     // Ermitteln des global hoechsten Residuums
-    for (i=0; i<g_num_procs; i++) {
+    for (i = 0; i < g_num_procs; i++) {
       maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i];
     }
 
+		results->stat_iteration++;
+		results->stat_precision = maxresiduum;
 
     /* check for stopping calculation depending on termination method */
     if (options->termination == TERM_PREC)
