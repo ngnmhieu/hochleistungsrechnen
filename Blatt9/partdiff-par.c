@@ -147,13 +147,13 @@ setLowAndHigh(int num_rows) {
   // if bigger: minIndex + bigSie; else: minIndex + smallSize
   g_size   = (g_rank < num_big) ? base_size + 1 : base_size;
   g_maxMat = g_minMat + g_size - 1;
-  
+
   // extra rows for data from other processes
   // for the first and last rank only one extra row
   if (g_num_procs == 1) {
     g_alloc_size = g_size;
   } else if (g_rank == 0 || g_rank == g_num_procs - 1) {
-    g_alloc_size = g_size + 1; 
+    g_alloc_size = g_size + 1;
   } else {
     g_alloc_size = g_size + 2;
   }
@@ -236,8 +236,8 @@ initMatrices (struct calculation_arguments* arguments, struct options const* opt
         {
           Matrix[g][g_alloc_size-1][i] = h * i;
         }
-      } 
-      
+      }
+
       // for every process
       start_row = g_rank == 0 ? 0 : 1;
       end_row = g_rank == (g_num_procs - 1) ? g_alloc_size : g_alloc_size - 1;
@@ -273,7 +273,7 @@ void
 calculate_jacobi (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
 	uint64_t i, j;                              /* local variables for loops */
-  uint64_t global_i;
+	uint64_t global_i;
 	int m1, m2;                                 /* used as indices for old and new matrices */
 	double star;                                /* four times center value minus 4 neigh.b values */
 	double residuum;                            /* residuum of current iteration */
