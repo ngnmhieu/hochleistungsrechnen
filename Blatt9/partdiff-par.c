@@ -261,25 +261,25 @@ static
 void
 calculate_gauss (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
-	uint64_t i, j;                              /* local variables for loops */
-	uint64_t global_i;
-	double star;                                /* four times center value minus 4 neigh.b values */
-	double residuum;                            /* residuum of current iteration */
-	double maxresiduum;                         /* maximum residuum value of a slave in iteration */
+  uint64_t i, j;                              /* local variables for loops */
+  uint64_t global_i;
+  double star;                                /* four times center value minus 4 neigh.b values */
+  double residuum;                            /* residuum of current iteration */
+  double maxresiduum;                         /* maximum residuum value of a slave in iteration */
 
-	uint64_t const N = arguments->N;
-	double const h = arguments->h;
+  uint64_t const N = arguments->N;
+  double const h = arguments->h;
 
-	double pih = 0.0;
-	double fpisin = 0.0;
+  double pih = 0.0;
+  double fpisin = 0.0;
 
-	int term_iteration = options->term_iteration;
+  int term_iteration = options->term_iteration;
 
-	if (options->inf_func == FUNC_FPISIN)
-	{
-		pih = PI * h;
-		fpisin = 0.25 * TWO_PI_SQUARE * h * h;
-	}
+  if (options->inf_func == FUNC_FPISIN)
+  {
+    pih = PI * h;
+    fpisin = 0.25 * TWO_PI_SQUARE * h * h;
+  }
 
   double** Matrix_Out = arguments->Matrix[0];
   double** Matrix_In  = arguments->Matrix[0];
@@ -293,20 +293,20 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
   }
 
   int iteration = 0;
-	while (term_iteration > 0)
-	{
-		maxresiduum = 0;
+  while (term_iteration > 0)
+  {
+    maxresiduum = 0;
 
-		/* over all rows */
-		for (i = 1; i < g_alloc_size - 1; i++)
-		{
-			double fpisin_i = 0.0;
+    /* over all rows */
+    for (i = 1; i < g_alloc_size - 1; i++)
+    {
+      double fpisin_i = 0.0;
 
-			if (options->inf_func == FUNC_FPISIN)
-			{
+      if (options->inf_func == FUNC_FPISIN)
+      {
         global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
-				fpisin_i = fpisin * sin(pih * (double) global_i);
-			}
+        fpisin_i = fpisin * sin(pih * (double) global_i);
+      }
 
       // Letzte Zeile vom oberen Prozess empfangen
       // (am Begin der Iteration)
@@ -330,26 +330,26 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
         /* sleep(2); printf("[Rank = %d | i = %d] Received first line of the next process.\n", g_rank, iteration); */
       }
 
-			/* over all columns */
-			for (j = 1; j < N; j++)
-			{
-				star = 0.25 * (Matrix_In[i-1][j] + Matrix_In[i][j-1] + Matrix_In[i][j+1] + Matrix_In[i+1][j]);
+      /* over all columns */
+      for (j = 1; j < N; j++)
+      {
+        star = 0.25 * (Matrix_In[i-1][j] + Matrix_In[i][j-1] + Matrix_In[i][j+1] + Matrix_In[i+1][j]);
 
-				if (options->inf_func == FUNC_FPISIN)
-				{
-					star += fpisin_i * sin(pih * (double)j);
-				}
+	if (options->inf_func == FUNC_FPISIN)
+	{
+	  star += fpisin_i * sin(pih * (double)j);
+	}
 
-				if (options->termination == TERM_PREC || term_iteration == 1)
-				{
-					residuum = Matrix_In[i][j] - star;
-					residuum = (residuum < 0) ? -residuum : residuum;
-					maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
-				}
+        if (options->termination == TERM_PREC || term_iteration == 1)
+        {
+          residuum = Matrix_In[i][j] - star;
+          residuum = (residuum < 0) ? -residuum : residuum;
+          maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
+        }
 
-				Matrix_Out[i][j] = star;
-			}
-      
+	Matrix_Out[i][j] = star;
+      }
+
       // Die neu berechnete erste Zeile am oberen Prozess senden
       if (i == 1 && g_rank > 0) {
         MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
@@ -359,7 +359,8 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
       }
-		}
+
+    }
 
     if (g_rank > 0) {
       MPI_Wait(&sup, MPI_STATUS_IGNORE);
@@ -379,26 +380,26 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       /* maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i]; */
     /* } */
 
-		results->stat_iteration++;
-		results->stat_precision = maxresiduum;
+    results->stat_iteration++;
+    results->stat_precision = maxresiduum;
 
     /* check for stopping calculation depending on termination method */
     if (options->termination == TERM_PREC)
-		{
-			if (maxresiduum < options->term_precision)
-			{
-				term_iteration = 0;
-			}
-		}
-		else if (options->termination == TERM_ITER)
-		{
-			term_iteration--;
-		}
+    {
+      if (maxresiduum < options->term_precision)
+      {
+        term_iteration = 0;
+      }
+    }
+    else if (options->termination == TERM_ITER)
+    {
+      term_iteration--;
+    }
 
     iteration++;
-	}
+  }
 
-	results->m = 0;
+  results->m = 0;
 }
 
 /* ************************************************************************ */
