@@ -269,6 +269,7 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
   double star;                                /* four times center value minus 4 neigh.b values */
   double residuum;                            /* residuum of current iteration */
   double maxresiduum;                         /* maximum residuum value of a slave in iteration */
+  double temp_maxresiduum;
 
   uint64_t const N = arguments->N;
   double const h = arguments->h;
@@ -389,6 +390,18 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
     /* for (i = 0; i < g_num_procs; i++) { */
       /* maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i]; */
     /* } */
+
+    // Sobald alle Prozesse die erste Itteration gerechnet haben, kann das globale maximum reduziert werden:
+    // proc0: [------] [------] ... [------] |reduce (N   >= N-0)
+    // proc1:          [------] ... [------] |reduce (N-1 >= N-1)
+    // ...
+    // procn:			... [------] |reduce (1   >= N-n)
+    // 									N=num_procs=n+1
+    if (termination == TERM_PREC && itteration >= num_procs - g_rank)
+    {
+      temp_maxresiduum = maxresiduum;
+      MPI_Allreduce(&temp_maxresiduum, maxresiduum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    }
 
     results->stat_iteration++;
     results->stat_precision = maxresiduum;
