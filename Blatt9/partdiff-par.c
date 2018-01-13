@@ -292,10 +292,9 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
 
   MPI_Request sdown, sup, rdown, rup;
 
-  /* Erste Zeile an den obigen Prozess senden (passiert nur einmal; wird in erster Itteration received) */
+  /* Erste Zeile an den obigen Prozess senden (passiert nur einmal; wird in erster Iteration received) */
   if (g_rank > 0) {
     MPI_Send(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD);
-    /* sleep(2); printf("[Rank = %d | i = %d] Sent first line to the previous process.\n", g_rank, 0); */
   }
 
   int iteration = 0;
@@ -321,22 +320,20 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       }
 
       // Erste Zeile vom unteren Prozess empfangen
-      // (Auch in der ersten Itteration - siehe send vor der Iteration)
+      // (Auch in der ersten Iteration - siehe send vor der Iteration)
       // (am Ende der Iteration)
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &rup);
       }
 
-      // TODO?: Irecv durch recv ersetzen
+      // Letze vom Oberen - wait
       if (i == 1 && g_rank > 0) {
         MPI_Wait(&rdown, MPI_STATUS_IGNORE);
-        /* sleep(2); printf("[Rank = %d | i = %d] Received last line of the previous process.\n", g_rank, iteration); */
       }
 
-      // TODO?: Irecv durch recv ersetzen
+      // Erste vom Unteren - wait
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Wait(&rup, MPI_STATUS_IGNORE);
-        /* sleep(2); printf("[Rank = %d | i = %d] Received first line of the next process.\n", g_rank, iteration); */
       }
 
       /* over all columns */
@@ -359,39 +356,33 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
 	Matrix_Out[i][j] = star;
       }
 
-      // Die neu berechnete erste Zeile an den oberen Prozess senden (nicht in der letzten Itteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
+      // Die neu berechnete erste Zeile an den oberen Prozess senden
+      // (nicht in der letzten Iteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
       // (Direkt nach dem Berechnen der ersten Zeile)
       if (i == 1 && g_rank > 0 && term_iteration > 1) {
         MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD, &sup);
       }
 
-      // Die neu berechnete letzte Zeile am unteren Prozess senden
+      // Die neu berechnete letzte Zeile an den unteren Prozess senden
       // (Direkt nach dem Berechnen der letzten Zeile)
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &sdown);
       }
     }
 
-    // (nicht in der letzten Itteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
+    // Erste an Oberen - wait
+    // (nicht in der letzten Iteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
     if (g_rank > 0 && term_iteration > 1) {
       MPI_Wait(&sup, MPI_STATUS_IGNORE);
-      /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) first line to the previous process.\n", g_rank, iteration); */
     }
 
+    // Letzte an Unteren - wait
     if (g_rank < g_num_procs - 1) {
       MPI_Wait(&sdown, MPI_STATUS_IGNORE);
-      /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) last line to the next process.\n", g_rank, iteration); */
     }
 
-    /* double residuums[g_num_procs]; */ //TODO
-    // Empfangen und Senden aller Residuum
-    /* MPI_Allgather(&maxresiduum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD); */
-    // Ermitteln des global hoechsten Residuums
-    /* for (i = 0; i < g_num_procs; i++) { */
-      /* maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i]; */
-    /* } */
 
-    // Sobald alle Prozesse die erste Itteration gerechnet haben, kann das globale maximum reduziert werden:
+    // Sobald alle Prozesse die erste Iteration gerechnet haben, kann das globale Maximum reduziert werden:
     // proc0: [------] [------] ... [------] |reduce (N   >= N-0)
     // proc1:          [------] ... [------] |reduce (N-1 >= N-1)
     // ...
@@ -411,13 +402,13 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
     {
       if (maxresiduum < options->term_precision)
       {
-        // Wenn die gewünschte Prezision ereicht wurde, müssen noch alle Prozesse die aktuelle Itteration (Sicht proc0) abschließen.
-	// Da die Itterationen jeweils verschoben sind, entsprichen die noch zu erledigen Itterationen dem Rang der Prozesses:
+        // Wenn die gewünschte Prezision ereicht wurde, müssen noch alle Prozesse die aktuelle Iteration (Sicht proc0) abschließen.
+	// Da die Iterationen jeweils verschoben sind, entsprechen die noch zu erledigen Iterationen dem Rang der Prozesses:
 	// 	proc0 ist fertig
-	// 	proc1 muss noch 1 Itteration abschleißen, um auf dem selben Stand zu sein
+	// 	proc1 muss noch 1 Iteration abschleißen, um auf dem selben Stand zu sein
 	// 	proc2 muss noch 2 ...
         term_iteration = g_rank;
-	// Zur Termination nach Itteration wechseln
+	// Zur Termination nach Iteration wechseln
 	termination = TERM_ITER;
       }
     }
