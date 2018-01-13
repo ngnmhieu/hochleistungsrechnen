@@ -359,17 +359,17 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
       }
-
-      if (i == 1 && g_rank > 0) {
-        MPI_Wait(&sup, MPI_STATUS_IGNORE);
-        /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) first line to the previous process.\n", g_rank, iteration); */
-      }
-
-      if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
-        MPI_Wait(&sdown, MPI_STATUS_IGNORE);
-        /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) last line to the next process.\n", g_rank, iteration); */
-      }
 		}
+
+    if (g_rank > 0) {
+      MPI_Wait(&sup, MPI_STATUS_IGNORE);
+      /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) first line to the previous process.\n", g_rank, iteration); */
+    }
+
+    if (g_rank < g_num_procs - 1) {
+      MPI_Wait(&sdown, MPI_STATUS_IGNORE);
+      /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) last line to the next process.\n", g_rank, iteration); */
+    }
 
     /* double residuums[g_num_procs]; */
     // Empfangen und Senden aller Residuum
