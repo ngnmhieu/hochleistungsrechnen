@@ -8,7 +8,7 @@ local_option_termination = options->termination; //enabels change of termination
 */
 
 //while (local_option_termination == TERM_PREC || term_iteration - iteration_count + g_rank > 0) {	<-- This would result in a deadlock, because communication with processes with lower ids would not be possible, after they have reached their last itteration => finish after last rank and put this check arround calculate
-while (local_option_termination == TERM_PREC || term_iteration - iteration_count + num_procs-1 > 0) {
+while (local_option_termination == TERM_PREC || term_iteration - iteration_count + g_num_procs-1 > 0) {
 
   MPI_Request sdown, sup, rdown, rup;
 
@@ -21,7 +21,7 @@ while (local_option_termination == TERM_PREC || term_iteration - iteration_count
   }
 
   // Daten des unteren Prozesses empfangen
-  if (g_rank < num_proc-1 && (iteration_count - g_rank) >= 0) {
+  if (g_rank < g_num_procs-1 && (iteration_count - g_rank) >= 0) {
     MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
   }
 
@@ -38,7 +38,7 @@ while (local_option_termination == TERM_PREC || term_iteration - iteration_count
     MPI_Wait(&sup, MPI_STATUS_IGNORE);
   }
 
-  if (g_rank < num_proc-1 && (iteration_count - g_rank) >= 0) {
+  if (g_rank < g_num_procs-1 && (iteration_count - g_rank) >= 0) {
     MPI_Wait(&rup, MPI_STATUS_IGNORE);
   }
   // END MPI Kommunikation

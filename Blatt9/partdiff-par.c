@@ -262,7 +262,144 @@ static
 void
 calculate_gauss (struct calculation_arguments const* arguments, struct calculation_results* results, struct options const* options)
 {
-  // TODO
+	uint64_t i, j;                              /* local variables for loops */
+	uint64_t global_i;
+	double star;                                /* four times center value minus 4 neigh.b values */
+	double residuum;                            /* residuum of current iteration */
+	double maxresiduum;                         /* maximum residuum value of a slave in iteration */
+
+	uint64_t const N = arguments->N;
+	double const h = arguments->h;
+
+	double pih = 0.0;
+	double fpisin = 0.0;
+
+	int term_iteration = options->term_iteration;
+
+	if (options->inf_func == FUNC_FPISIN)
+	{
+		pih = PI * h;
+		fpisin = 0.25 * TWO_PI_SQUARE * h * h;
+	}
+
+  double** Matrix_Out = arguments->Matrix[0];
+  double** Matrix_In  = arguments->Matrix[0];
+
+  MPI_Request sdown, sup, rdown, rup;
+
+  /* Erste Zeile am obigen Prozess senden (passiert nur einmal) */
+  if (g_rank > 0) {
+    /* printf("[Rank = %d | i = %d] Sending first line of the previous process.\n", g_rank, 0); */
+    MPI_Send(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD);
+  }
+
+  int iteration = 0;
+	while (term_iteration > 0)
+	{
+		maxresiduum = 0;
+
+		/* over all rows */
+		for (i = 1; i < g_alloc_size - 1; i++)
+		{
+			double fpisin_i = 0.0;
+
+			if (options->inf_func == FUNC_FPISIN)
+			{
+        global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
+				fpisin_i = fpisin * sin(pih * (double) global_i);
+			}
+
+      // Letzte Zeile vom oberen Prozess empfangen
+      // (am Begin der Iteration)
+      if (i == 1 && g_rank > 0) {
+        /* printf("[Rank = %d | i = %d] Receiving last line of the previous process.\n", g_rank, iteration); */
+        MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
+      }
+
+      // Erste Zeile vom unteren Prozess empfangen
+      // (am Ende der Iteration)
+      if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
+        /* printf("[Rank = %d | i = %d] Receiving first line of the next process.\n", g_rank, iteration); */
+        MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
+      }
+
+      if (i == 1 && g_rank > 0) {
+        MPI_Wait(&rdown, MPI_STATUS_IGNORE);
+      }
+
+      if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
+        MPI_Wait(&rup, MPI_STATUS_IGNORE);
+      }
+
+			/* over all columns */
+			for (j = 1; j < N; j++)
+			{
+				star = 0.25 * (Matrix_In[i-1][j] + Matrix_In[i][j-1] + Matrix_In[i][j+1] + Matrix_In[i+1][j]);
+
+				if (options->inf_func == FUNC_FPISIN)
+				{
+					star += fpisin_i * sin(pih * (double)j);
+				}
+
+				if (options->termination == TERM_PREC || term_iteration == 1)
+				{
+					residuum = Matrix_In[i][j] - star;
+					residuum = (residuum < 0) ? -residuum : residuum;
+					maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
+				}
+
+				Matrix_Out[i][j] = star;
+			}
+      
+      // Die neu berechnete erste Zeile am oberen Prozess senden
+      if (i == 1 && g_rank > 0) {
+        MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
+      }
+
+      // Die neu berechnete letzte Zeile am unteren Prozess senden
+      if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
+        MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
+      }
+
+      if (i == 1 && g_rank > 0) {
+        /* printf("[Rank = %d | i = %d] Sending (neu) first line to the previous process.\n", g_rank, iteration); */
+        MPI_Wait(&sup, MPI_STATUS_IGNORE);
+      }
+
+      if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
+        /* printf("[Rank = %d | i = %d] Sending (neu) last line to the next process.\n", g_rank, iteration); */
+        MPI_Wait(&sdown, MPI_STATUS_IGNORE);
+      }
+		}
+
+    /* double residuums[g_num_procs]; */
+    // Empfangen und Senden aller Residuum
+    /* MPI_Allgather(&maxresiduum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD); */
+    // Ermitteln des global hoechsten Residuums
+    /* for (i = 0; i < g_num_procs; i++) { */
+      /* maxresiduum = (residuums[i] < maxresiduum) ? maxresiduum : residuums[i]; */
+    /* } */
+
+		results->stat_iteration++;
+		results->stat_precision = maxresiduum;
+
+    /* check for stopping calculation depending on termination method */
+    if (options->termination == TERM_PREC)
+		{
+			if (maxresiduum < options->term_precision)
+			{
+				term_iteration = 0;
+			}
+		}
+		else if (options->termination == TERM_ITER)
+		{
+			term_iteration--;
+		}
+
+    iteration++;
+	}
+
+	results->m = 0;
 }
 
 /* ************************************************************************ */
@@ -559,11 +696,7 @@ main (int argc, char** argv)
 	// MPI INIT
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &g_rank);
-	if (options.method == METH_JACOBI){
-		MPI_Comm_size(MPI_COMM_WORLD, &g_num_procs);
-	} else {
-		g_num_procs = 1;
-	}
+  MPI_Comm_size(MPI_COMM_WORLD, &g_num_procs);
 
 	allocateMatrices(&arguments);
 	initMatrices(&arguments, &options);

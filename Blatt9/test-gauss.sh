@@ -84,8 +84,8 @@ diff $SEQ_OUT $MPI_OUT
 #####################################################################
 
 NUM_PROC=4
-INTERLINES=100
-ITERATIONS=500
+INTERLINES=50
+ITERATIONS=300
 FUNC=2
 MPI_OUT=output/partdiff-par-4.txt
 SEQ_OUT=output/partdiff-seq-4.txt
@@ -99,11 +99,25 @@ diff $SEQ_OUT $MPI_OUT
 
 NUM_PROC=5
 INTERLINES=100
-PRECISION=1e-4
-FUNC=1
+ITERATIONS=500
+FUNC=2
 MPI_OUT=output/partdiff-par-5.txt
 SEQ_OUT=output/partdiff-seq-5.txt
-echo "\nTest 5: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
+echo "\nTest 5: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; Iterations = $ITERATIONS"
+echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT"
+mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $MPI_OUT
+./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_ITERATION $ITERATIONS > $SEQ_OUT
+diff $SEQ_OUT $MPI_OUT
+
+#####################################################################
+
+NUM_PROC=5
+INTERLINES=100
+PRECISION=1e-4
+FUNC=1
+MPI_OUT=output/partdiff-par-6.txt
+SEQ_OUT=output/partdiff-seq-6.txt
+echo "\nTest 6: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
 echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
@@ -115,9 +129,9 @@ NUM_PROC=10
 INTERLINES=20
 PRECISION=1e-4
 FUNC=2
-MPI_OUT=output/partdiff-par-6.txt
-SEQ_OUT=output/partdiff-seq-6.txt
-echo "\nTest 6: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
+MPI_OUT=output/partdiff-par-7.txt
+SEQ_OUT=output/partdiff-seq-7.txt
+echo "\nTest 7: Prozesse = $NUM_PROC ; Interlines = $INTERLINES; PRECISION = $PRECISION"
 echo "Command: mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT"
 mpirun -np $NUM_PROC ./partdiff-par $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $MPI_OUT
 ./partdiff-seq $SINGLE_THREAD $GAUSS_SEIDEL $INTERLINES $FUNC $NACH_GENAUIGKEIT $PRECISION > $SEQ_OUT
