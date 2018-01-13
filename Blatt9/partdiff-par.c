@@ -26,10 +26,9 @@
 #include <math.h>
 #include <malloc.h>
 #include <sys/time.h>
-
+#include <unistd.h>
 #include <mpi.h>
 #include "partdiff-par.h"
-
 
 int g_rank;					/* process rank */
 int g_num_procs;		/* number of processes working */
@@ -289,8 +288,8 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
 
   /* Erste Zeile am obigen Prozess senden (passiert nur einmal) */
   if (g_rank > 0) {
-    /* printf("[Rank = %d | i = %d] Sending first line of the previous process.\n", g_rank, 0); */
     MPI_Send(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD);
+    /* sleep(2); printf("[Rank = %d | i = %d] Sent first line to the previous process.\n", g_rank, 0); */
   }
 
   int iteration = 0;
@@ -312,23 +311,23 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       // Letzte Zeile vom oberen Prozess empfangen
       // (am Begin der Iteration)
       if (i == 1 && g_rank > 0) {
-        /* printf("[Rank = %d | i = %d] Receiving last line of the previous process.\n", g_rank, iteration); */
         MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
       }
 
       // Erste Zeile vom unteren Prozess empfangen
       // (am Ende der Iteration)
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
-        /* printf("[Rank = %d | i = %d] Receiving first line of the next process.\n", g_rank, iteration); */
         MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
       }
 
       if (i == 1 && g_rank > 0) {
         MPI_Wait(&rdown, MPI_STATUS_IGNORE);
+        /* sleep(2); printf("[Rank = %d | i = %d] Received last line of the previous process.\n", g_rank, iteration); */
       }
 
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Wait(&rup, MPI_STATUS_IGNORE);
+        /* sleep(2); printf("[Rank = %d | i = %d] Received first line of the next process.\n", g_rank, iteration); */
       }
 
 			/* over all columns */
@@ -362,13 +361,13 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       }
 
       if (i == 1 && g_rank > 0) {
-        /* printf("[Rank = %d | i = %d] Sending (neu) first line to the previous process.\n", g_rank, iteration); */
         MPI_Wait(&sup, MPI_STATUS_IGNORE);
+        /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) first line to the previous process.\n", g_rank, iteration); */
       }
 
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
-        /* printf("[Rank = %d | i = %d] Sending (neu) last line to the next process.\n", g_rank, iteration); */
         MPI_Wait(&sdown, MPI_STATUS_IGNORE);
+        /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) last line to the next process.\n", g_rank, iteration); */
       }
 		}
 
