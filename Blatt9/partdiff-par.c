@@ -397,10 +397,10 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
     // ...
     // procn:			... [------] |reduce (1   >= N-n)
     // 									N=num_procs=n+1
-    if (termination == TERM_PREC && itteration >= num_procs - g_rank)
+    if (termination == TERM_PREC && iteration >= g_num_procs - g_rank)
     {
       temp_maxresiduum = maxresiduum;
-      MPI_Allreduce(&temp_maxresiduum, maxresiduum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(&temp_maxresiduum, &maxresiduum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     }
 
     results->stat_iteration++;
