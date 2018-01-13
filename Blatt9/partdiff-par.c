@@ -30,6 +30,9 @@
 #include <mpi.h>
 #include "partdiff-par.h"
 
+#define COMM_MATRIX 0
+#define COMM_MAXRESIDUUM 1
+
 int g_rank;					/* process rank */
 int g_num_procs;		/* number of processes working */
 int g_minMat;				/* lower index for matrix-section */
@@ -273,7 +276,9 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
   double pih = 0.0;
   double fpisin = 0.0;
 
+  // lokale Kopien, da diese Werte hier verändert werden
   int term_iteration = options->term_iteration;
+  int termination = options->termination;
 
   if (options->inf_func == FUNC_FPISIN)
   {
@@ -286,9 +291,9 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
 
   MPI_Request sdown, sup, rdown, rup;
 
-  /* Erste Zeile am obigen Prozess senden (passiert nur einmal) */
+  /* Erste Zeile an den obigen Prozess senden (passiert nur einmal; wird in erster Itteration received) */
   if (g_rank > 0) {
-    MPI_Send(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD);
+    MPI_Send(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD);
     /* sleep(2); printf("[Rank = %d | i = %d] Sent first line to the previous process.\n", g_rank, 0); */
   }
 
@@ -305,26 +310,29 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       if (options->inf_func == FUNC_FPISIN)
       {
         global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
-        fpisin_i = fpisin * sin(pih * (double) global_i);
+	fpisin_i = fpisin * sin(pih * (double) global_i);
       }
 
       // Letzte Zeile vom oberen Prozess empfangen
-      // (am Begin der Iteration)
+      // (zu Begin der Iteration)
       if (i == 1 && g_rank > 0) {
-        MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
+        MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD, &rdown);
       }
 
       // Erste Zeile vom unteren Prozess empfangen
+      // (Auch in der ersten Itteration - siehe send vor der Iteration)
       // (am Ende der Iteration)
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
-        MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
+        MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &rup);
       }
 
+      // TODO?: Irecv durch recv ersetzen
       if (i == 1 && g_rank > 0) {
         MPI_Wait(&rdown, MPI_STATUS_IGNORE);
         /* sleep(2); printf("[Rank = %d | i = %d] Received last line of the previous process.\n", g_rank, iteration); */
       }
 
+      // TODO?: Irecv durch recv ersetzen
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
         MPI_Wait(&rup, MPI_STATUS_IGNORE);
         /* sleep(2); printf("[Rank = %d | i = %d] Received first line of the next process.\n", g_rank, iteration); */
@@ -340,29 +348,31 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
 	  star += fpisin_i * sin(pih * (double)j);
 	}
 
-        if (options->termination == TERM_PREC || term_iteration == 1)
-        {
-          residuum = Matrix_In[i][j] - star;
-          residuum = (residuum < 0) ? -residuum : residuum;
-          maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
-        }
+	if (termination == TERM_PREC || term_iteration == 1)
+	{
+	  residuum = Matrix_In[i][j] - star;
+	  residuum = (residuum < 0) ? -residuum : residuum;
+	  maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
+	}
 
 	Matrix_Out[i][j] = star;
       }
 
-      // Die neu berechnete erste Zeile am oberen Prozess senden
-      if (i == 1 && g_rank > 0) {
-        MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
+      // Die neu berechnete erste Zeile an den oberen Prozess senden (nicht in der letzten Itteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
+      // (Direkt nach dem Berechnen der ersten Zeile)
+      if (i == 1 && g_rank > 0 && term_iteration > 1) {
+        MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD, &sup);
       }
 
       // Die neu berechnete letzte Zeile am unteren Prozess senden
+      // (Direkt nach dem Berechnen der letzten Zeile)
       if (i == g_alloc_size - 2 && g_rank < g_num_procs - 1) {
-        MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
+        MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &sdown);
       }
-
     }
 
-    if (g_rank > 0) {
+    // (nicht in der letzten Itteration, da zu diesem Zeitpunkt der obere Prozess bereits nicht mehr in die Schleife einsteigt)
+    if (g_rank > 0 && term_iteration > 1) {
       MPI_Wait(&sup, MPI_STATUS_IGNORE);
       /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) first line to the previous process.\n", g_rank, iteration); */
     }
@@ -372,7 +382,7 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
       /* sleep(2); printf("[Rank = %d | i = %d] Sent (new) last line to the next process.\n", g_rank, iteration); */
     }
 
-    /* double residuums[g_num_procs]; */
+    /* double residuums[g_num_procs]; */ //TODO
     // Empfangen und Senden aller Residuum
     /* MPI_Allgather(&maxresiduum, 1, MPI_DOUBLE, &residuums, 1, MPI_DOUBLE, MPI_COMM_WORLD); */
     // Ermitteln des global hoechsten Residuums
@@ -384,14 +394,21 @@ calculate_gauss (struct calculation_arguments const* arguments, struct calculati
     results->stat_precision = maxresiduum;
 
     /* check for stopping calculation depending on termination method */
-    if (options->termination == TERM_PREC)
+    if (termination == TERM_PREC)
     {
       if (maxresiduum < options->term_precision)
       {
-        term_iteration = 0;
+        // Wenn die gewünschte Prezision ereicht wurde, müssen noch alle Prozesse die aktuelle Itteration (Sicht proc0) abschließen.
+	// Da die Itterationen jeweils verschoben sind, entsprichen die noch zu erledigen Itterationen dem Rang der Prozesses:
+	// 	proc0 ist fertig
+	// 	proc1 muss noch 1 Itteration abschleißen, um auf dem selben Stand zu sein
+	// 	proc2 muss noch 2 ...
+        term_iteration = g_rank;
+	// Zur Termination nach Itteration wechseln
+	termination = TERM_ITER;
       }
     }
-    else if (options->termination == TERM_ITER)
+    else if (termination == TERM_ITER)
     {
       term_iteration--;
     }
@@ -453,20 +470,20 @@ calculate_jacobi (struct calculation_arguments const* arguments, struct calculat
 
     // Senden der hintersten Reihe an den naechsten Rang
     if (g_rank < g_num_procs-1) {
-      MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &sdown);
+      MPI_Isend(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &sdown);
     }
     // Senden der vordersten Reihe an den vorherigen Rang
     if (g_rank > 0) {
-      MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
+      MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD, &sup);
     }
 
     // Empfangen der letzten Reihe des vorherigen Prozesses
     if (g_rank > 0) {
-      MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
+      MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, COMM_MATRIX, MPI_COMM_WORLD, &rdown);
     }
     // Empfangen der ersten Reihe des naechsten Prozesses
     if (g_rank < g_num_procs-1) {
-      MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
+      MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, COMM_MATRIX, MPI_COMM_WORLD, &rup);
     }
 
     // Warten
