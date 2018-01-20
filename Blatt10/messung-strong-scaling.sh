@@ -1,0 +1,12 @@
+sbatch ./job-skripte/STRONG_SCALING_GS_10_120_1920.job
+sbatch ./job-skripte/STRONG_SCALING_GS_10_240_1920.job
+sbatch ./job-skripte/STRONG_SCALING_GS_1_12_1920.job
+sbatch ./job-skripte/STRONG_SCALING_GS_2_24_1920.job
+sbatch ./job-skripte/STRONG_SCALING_GS_4_48_1920.job
+sbatch ./job-skripte/STRONG_SCALING_GS_8_96_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_10_120_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_10_240_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_1_12_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_2_24_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_4_48_1920.job
+sbatch ./job-skripte/STRONG_SCALING_JA_8_96_1920.job

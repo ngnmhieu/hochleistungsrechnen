@@ -1,0 +1,14 @@
+sbatch ./job-skripte/COMMUNICATION_A_GS_10_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_1_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_2_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_3_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_4_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_6_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_GS_8_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_10_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_1_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_2_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_3_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_4_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_6_10_200.job
+sbatch ./job-skripte/COMMUNICATION_A_JA_8_10_200.job

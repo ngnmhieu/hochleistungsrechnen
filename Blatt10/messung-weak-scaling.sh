@@ -1,0 +1,14 @@
+sbatch ./job-skripte/WEAK_SCALING_GS_1_1_400.job
+sbatch ./job-skripte/WEAK_SCALING_GS_1_2_564.job
+sbatch ./job-skripte/WEAK_SCALING_GS_2_4_800.job
+sbatch ./job-skripte/WEAK_SCALING_GS_4_16_1600.job
+sbatch ./job-skripte/WEAK_SCALING_GS_4_24_1960.job
+sbatch ./job-skripte/WEAK_SCALING_GS_4_8_1128.job
+sbatch ./job-skripte/WEAK_SCALING_GS_8_64_3200.job
+sbatch ./job-skripte/WEAK_SCALING_JA_1_1_400.job
+sbatch ./job-skripte/WEAK_SCALING_JA_1_2_564.job
+sbatch ./job-skripte/WEAK_SCALING_JA_2_4_800.job
+sbatch ./job-skripte/WEAK_SCALING_JA_4_16_1600.job
+sbatch ./job-skripte/WEAK_SCALING_JA_4_24_1960.job
+sbatch ./job-skripte/WEAK_SCALING_JA_4_8_1128.job
+sbatch ./job-skripte/WEAK_SCALING_JA_8_64_3200.job
