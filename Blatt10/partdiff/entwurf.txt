@@ -1,0 +1,109 @@
+// Initialisierung der Variablen ....
+
+iteration_count = 0
+local_option_termination = options->termination; //enabels change of termination condition once term_prec is reached
+
+/*
+!!!	iteration_count +- g_rank sorgt hier überall dafür, dass die prozesse versetzt in die Iterationen starten	!!!
+*/
+
+//while (local_option_termination == TERM_PREC || term_iteration - iteration_count + g_rank > 0) {	<-- This would result in a deadlock, because communication with processes with lower ids would not be possible, after they have reached their last itteration => finish after last rank and put this check arround calculate
+while (local_option_termination == TERM_PREC || term_iteration - iteration_count + g_num_procs-1 > 0) {
+
+  MPI_Request sdown, sup, rdown, rup;
+
+  maxresiduum = 0;
+
+  // START MPI Kommunikation
+  // Daten des obigen Prozesses aus der vorherigen Iteration empfangen
+  if (g_rank > 0 && (iteration_count - g_rank) >= 0) {
+    MPI_Irecv(Matrix_In[0], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &rdown);
+  }
+
+  // Daten des unteren Prozesses empfangen
+  if (g_rank < g_num_procs-1 && (iteration_count - g_rank) >= 0) {
+    MPI_Irecv(Matrix_In[g_alloc_size-1], N+1, MPI_DOUBLE, g_rank+1, 0, MPI_COMM_WORLD, &rup);
+  }
+
+  // Erste Zeile an den obigen Prozess schicken
+  if (g_rank > 0 && (iteration_count - g_rank + 1) >= 0) {
+    MPI_Isend(Matrix_In[1], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sup);
+  }
+
+  if (g_rank > 0 && (iteration_count - g_rank) >= 0) {
+    MPI_Wait(&rdown, MPI_STATUS_IGNORE);
+  }
+
+  if (g_rank > 0 && (iteration_count - g_rank + 1) >= 0) {
+    MPI_Wait(&sup, MPI_STATUS_IGNORE);
+  }
+
+  if (g_rank < g_num_procs-1 && (iteration_count - g_rank) >= 0) {
+    MPI_Wait(&rup, MPI_STATUS_IGNORE);
+  }
+  // END MPI Kommunikation
+
+
+  // START CALCULATION
+  if (local_option_termination != TERM_PREC && term_iteration - iteration_count + g_rank > 0) { // if proc is done -> dont calc, just communicate
+
+	  /* over all rows */
+	  for (i = 1; i < g_alloc_size - 1; i++)			// INFO: in der ersten (außer proc-0) und letzten (außer proc-[num_proc-1]) Zeile der jeweiligen Matrix werden die entsprechenden Zeilen der angrenzenden Prozesse gespeichert
+	  {
+	    double fpisin_i = 0.0;
+
+	    if (options->inf_func == FUNC_FPISIN)
+	    {
+	      global_i = g_rank == 0 ? g_minMat + i : g_minMat + i - 1;
+	      fpisin_i = fpisin * sin(pih * (double) global_i);
+	    }
+
+	    /* over all columns */
+	    for (j = 1; j < N; j++)
+	    {
+	      star = 0.25 * (Matrix_In[i-1][j] + Matrix_In[i][j-1] + Matrix_In[i][j+1] + Matrix_In[i+1][j]);
+
+	      if (options->inf_func == FUNC_FPISIN)
+	      {
+		star += fpisin_i * sin(pih * (double)j);
+	      }
+
+	      if (local_option_termination == TERM_PREC || term_iteration == 1)
+	      {
+		residuum = Matrix_In[i][j] - star;
+		residuum = (residuum < 0) ? -residuum : residuum;
+		maxresiduum = (residuum < maxresiduum) ? maxresiduum : residuum;
+	      }
+
+	      Matrix_Out[i][j] = star;
+	    }
+	  }
+  }
+  // END CALCULATION
+
+  if (iteration_count - g_num_procs + 1 >= 0) {
+    double global_maxresiduum;
+    MPI_Allreduce(&maxresiduum, &global_maxresiduum, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+
+    // Abbruchbedingung
+    if (local_option_termination == TERM_PREC
+        && global_maxresiduum < options->term_precision) {
+      // Beenden aller Prozesse, nach Erreichen der aktuellen Itteration des ROOT prozesses.
+      // Dafür muss der Abbruch nach Itteration eingeschaltet werden
+      local_option_termination = TERM_ITER;
+      // Und die aktuelle Itteration (des ROOTs) als term_iteration genutzt werden
+      term_iteration = iteration_count;
+      // durch "term_iteration - iteration_count + g_rank > 0" als Schelifenbedingung läuft jeder Prozess dann noch bis zur entsprechenden Itteration durch.
+      // Die Präzision wird so zwar noch etwas verbessert, aber die Matrix befindet sich wieder in einem korrekten Zustand
+    }
+  }
+
+  // START MPI Kommunikation
+  // Letzte Zeile an den unteren Prozess (in der nächsten Iteration) senden
+  if (g_rank < g_num_procs - 1 && (iteration_count - g_rank) >= 0) {
+    MPI_Send(Matrix_In[g_alloc_size-2], N+1, MPI_DOUBLE, g_rank-1, 0, MPI_COMM_WORLD, &sdown)
+  }
+  // END MPI Kommunikation
+
+  iteration_count++;
+}
